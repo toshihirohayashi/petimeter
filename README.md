@@ -1,5 +1,4 @@
-# Petimeter: a tool for assessing assembly quality based on cDNA
-mappings
+# Petimeter: a tool for assessing assembly quality based on cDNA mappings
 
 The idea is to take full length cDNA from a closely related species
 and count how many of them are found in the assembly. This can be done
@@ -24,3 +23,15 @@ enable comparative presentations.
 - A file with quantitative data for plotting etc.
 The output is in JSON format for easy parsing in most programming
 languages. 
+
+
+## Dependencies
+This project is not properly packaged yet, so you have to make sure
+you have the right packages installed. Petimeter needs:
+- BioPython
+- gffutils
+- json
+- matplotlib
+- numpy
+- seaborn
+- termcolor
