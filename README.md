@@ -35,3 +35,11 @@ you have the right packages installed. Petimeter needs:
 - numpy
 - seaborn
 - termcolor
+
+
+---
+The word "petimeter" is Swedish for "picky person" and is derived from
+the French "petit-maître".
+
+"En petimeter skulle stava 'petimeter' som 'petimäter'."
+
