@@ -1,0 +1,43 @@
+{
+  "completeness": {
+    "cDNA": 6788, 
+    "CDS": 3676
+  }, 
+  "cDNA_coverage": {
+    "max": 1.0, 
+    "stdev": 0.23900000572287489, 
+    "median": 0.97971602434077076, 
+    "min": 0.007510326699211416, 
+    "mean": 0.81398780183849784
+  }, 
+  "genes_per_contig": {
+    "min": 1, 
+    "max": 75, 
+    "stdev": 1.547139724622332, 
+    "median": 1.0, 
+    "max_contig": "contig_1241761", 
+    "mean": 1.4097699269436266
+  }, 
+  "five_prime_extent": {
+    "max": 25393, 
+    "stdev": 2951.8981323085768, 
+    "median": 1912.0, 
+    "min": 0, 
+    "mean": 2822.0358109675922
+  }, 
+  "input": {
+    "name": "CLCh003d.fa", 
+    "cdna_file": "/proj/b2010042/public/SitkaSpruce.fa", 
+    "gff_file": "GFFoutput/CLCh003d_1000.gff", 
+    "n_contigs": 10113919, 
+    "assembly_file": "/proj/b2010042/assembly/nobackup/CLC/CLCh003/CLCh003d/CLCh003d.fa", 
+    "n_cDNA": 13197
+  }, 
+  "three_prime_extent": {
+    "max": 36901, 
+    "stdev": 3079.9659819236977, 
+    "median": 1901.0, 
+    "min": 1, 
+    "mean": 2855.3209064892876
+  }
+}

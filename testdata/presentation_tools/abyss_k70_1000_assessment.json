@@ -1,0 +1,43 @@
+{
+  "completeness": {
+    "cDNA": 5323, 
+    "CDS": 3261
+  }, 
+  "cDNA_coverage": {
+    "max": 1.0, 
+    "stdev": 0.26460147795271288, 
+    "median": 0.8274539877300614, 
+    "min": 0.006254510464277123, 
+    "mean": 0.7518860766732145
+  }, 
+  "genes_per_contig": {
+    "min": 1, 
+    "max": 70, 
+    "stdev": 1.5799373511534813, 
+    "median": 1.0, 
+    "max_contig": "c369387952", 
+    "mean": 1.4266107078039927
+  }, 
+  "five_prime_extent": {
+    "max": 24626, 
+    "stdev": 2336.6418700775166, 
+    "median": 1059.0, 
+    "min": 0, 
+    "mean": 1823.9208078238053
+  }, 
+  "input": {
+    "name": "ABySS dip k=70", 
+    "cdna_file": "/proj/b2010042/public/SitkaSpruce.fa", 
+    "gff_file": "analysis/GFFoutput/abyss_k70_1000.gff", 
+    "n_contigs": 242889215, 
+    "assembly_file": "/proj/b2010042/assembly/spruce2.0/abyss_k70/spruce-scaffolds.fa", 
+    "n_cDNA": 13197
+  }, 
+  "three_prime_extent": {
+    "max": 27044, 
+    "stdev": 2241.6997293191212, 
+    "median": 1003.0, 
+    "min": 1, 
+    "mean": 1741.0384034348415
+  }
+}

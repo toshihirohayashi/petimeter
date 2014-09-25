@@ -1,0 +1,43 @@
+{
+  "completeness": {
+    "cDNA": 5025, 
+    "CDS": 3178
+  }, 
+  "cDNA_coverage": {
+    "max": 1.0, 
+    "stdev": 0.25990978804777271, 
+    "median": 0.7960750853242321, 
+    "min": 0.007269279393173199, 
+    "mean": 0.74414734130389704
+  }, 
+  "genes_per_contig": {
+    "min": 1, 
+    "max": 40, 
+    "stdev": 1.4427409752826905, 
+    "median": 1.0, 
+    "max_contig": "scf7180079495164", 
+    "mean": 1.404712099526588
+  }, 
+  "five_prime_extent": {
+    "max": 16850, 
+    "stdev": 1717.5067271817074, 
+    "median": 990.0, 
+    "min": 0, 
+    "mean": 1483.5772395955796
+  }, 
+  "input": {
+    "name": "MaSuRCa hap", 
+    "cdna_file": "/proj/b2010042/public/SitkaSpruce.fa", 
+    "gff_file": "analysis/GFFoutput/masurca_140609_1000.gff", 
+    "n_contigs": 13897995, 
+    "assembly_file": "/proj/b2010042/assembly/spruce2.0/masurca/genome.scf.fasta", 
+    "n_cDNA": 13197
+  }, 
+  "three_prime_extent": {
+    "max": 16184, 
+    "stdev": 1605.4327712442303, 
+    "median": 973.0, 
+    "min": 1, 
+    "mean": 1457.9272670271964
+  }
+}

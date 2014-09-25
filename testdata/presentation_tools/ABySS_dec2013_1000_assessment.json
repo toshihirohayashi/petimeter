@@ -1,0 +1,43 @@
+{
+  "completeness": {
+    "cDNA": 7651, 
+    "CDS": 4357
+  }, 
+  "cDNA_coverage": {
+    "max": 1.0, 
+    "stdev": 0.24035747993261397, 
+    "median": 1.0, 
+    "min": 0.0070611970410221925, 
+    "mean": 0.8352602518014588
+  }, 
+  "genes_per_contig": {
+    "min": 1, 
+    "max": 34, 
+    "stdev": 1.4384424243160205, 
+    "median": 1.0, 
+    "max_contig": "c449288412", 
+    "mean": 1.4310460438086723
+  }, 
+  "five_prime_extent": {
+    "max": 101671, 
+    "stdev": 7780.9823563654872, 
+    "median": 3979.0, 
+    "min": 0, 
+    "mean": 6605.8686450605228
+  }, 
+  "input": {
+    "name": "ABySS dip k=64", 
+    "cdna_file": "/proj/b2010042/public/SitkaSpruce.fa", 
+    "gff_file": "analysis/GFFoutput/abyss_dec2013_1000.gff", 
+    "n_contigs": 1625511, 
+    "assembly_file": "/proj/b2010042/assembly/spruce1.1/ABySS_dec13/Z4006-scaffolds.min1000.fa", 
+    "n_cDNA": 13197
+  }, 
+  "three_prime_extent": {
+    "max": 78429, 
+    "stdev": 7941.8157169379738, 
+    "median": 3911.0, 
+    "min": 1, 
+    "mean": 6690.0511518937919
+  }
+}

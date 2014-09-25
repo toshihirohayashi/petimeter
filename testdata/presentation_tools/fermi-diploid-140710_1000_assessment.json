@@ -1,0 +1,43 @@
+{
+  "completeness": {
+    "cDNA": 5437, 
+    "CDS": 3617
+  }, 
+  "cDNA_coverage": {
+    "max": 1.0, 
+    "stdev": 0.25564704396218835, 
+    "median": 0.84574419115199673, 
+    "min": 0.004579803068468056, 
+    "mean": 0.7637737026757625
+  }, 
+  "genes_per_contig": {
+    "min": 1, 
+    "max": 37, 
+    "stdev": 1.3304384198653971, 
+    "median": 1.0, 
+    "max_contig": "4312287628_7026368410", 
+    "mean": 1.3834146341463414
+  }, 
+  "five_prime_extent": {
+    "max": 40853, 
+    "stdev": 2819.5812940007913, 
+    "median": 907.0, 
+    "min": 0, 
+    "mean": 1795.5769471869612
+  }, 
+  "input": {
+    "name": "Fermi diploid", 
+    "cdna_file": "/proj/b2010042/public/SitkaSpruce.fa", 
+    "gff_file": "analysis/GFFoutput/fermi-diploid-140710_1000.gff", 
+    "n_contigs": 37675553, 
+    "assembly_file": "/proj/b2010042/assembly/fermi/fermi-diploid-140710/Pabies-diploid.fermi-OVL50.p4.fasta", 
+    "n_cDNA": 13197
+  }, 
+  "three_prime_extent": {
+    "max": 44545, 
+    "stdev": 2885.1685864246106, 
+    "median": 908.0, 
+    "min": 1, 
+    "mean": 1810.8450086193386
+  }
+}
