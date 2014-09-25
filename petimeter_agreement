@@ -1,8 +1,10 @@
-#! /bin/env python
+#! /usr/bin/env python
 import json
 import argparse
 import sys 
 import numpy
+
+cover_threshold=0.95     # How well should the cDNA have been matched to the assembly? This matches 'min_coverage_for_complete_gene' in petimeter.
 
 def intersection(d, name1, name2):
     '''
@@ -13,9 +15,13 @@ def intersection(d, name1, name2):
     t1 = d[name1]['cDNA_coverage']
     t2 = d[name2]['cDNA_coverage']
 
+    # Filter away tiny hits, using a dict comprehension:
+    x1 = {acc: cov for (acc, cov) in t1.iteritems() if cov >= cover_threshold}
+    x2 = {acc: cov for (acc, cov) in t2.iteritems() if cov >= cover_threshold}
+
     # Extract transcipt names as a set
-    s1 = set(t1.keys())
-    return len(s1.intersection(t2.keys()))
+    s1 = set(x1.keys())
+    return len(s1.intersection(x2.keys()))
 
 
 def gene_correlation(d, name1, name2):
@@ -43,12 +49,13 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Take two or several JSON files from petimeter and compute agreement on gene contents.')
     parser.add_argument('-c', '--correlation', action="store_true", help='Output the correlation coefficient for the transcript alignment extent instead of gene count.')
+    parser.add_argument('-t', '--threshold', dest='cover_threshold', action='store',  help='Minimum alignment fraction of cDNA on contig. Default is 0.95. Set to 0 to get _every_ trace of a gene matched upp. This option does not affect -c', default=cover_threshold)
     parser.add_argument('jsonfile')
     parser.add_argument('jsonfiles', nargs='+')
 
     args = parser.parse_args()
+    cover_threshold = float(args.cover_threshold)
 
-    print args
 
     data={}                     # We will collect all data here for plotting
     for f in [args.jsonfile] + args.jsonfiles:
