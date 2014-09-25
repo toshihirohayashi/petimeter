@@ -1,0 +1,153 @@
+#! /bin/env python
+import json
+import argparse
+import sys 
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+
+#[name]['cdna_coverage'])
+#, data[name]['five_prime_extent'], data[name]['three_prime_extent'])
+
+# Constants
+c_complete_threshold = 0.95     # 95% of a cDNAmust be aligned in order to count as "complete", otherwise partial.
+
+def count_complete_and_partial(l):
+    '''
+    Count how many elements of l is larger than c_complete_threshold, are "complete". 
+    Return a pair of (complete, list length minus complete)
+    '''
+    n_complete = len(filter(lambda c: c >= c_complete_threshold, l))
+    return (n_complete, len(l)-n_complete)
+    
+
+def plot_bars(prefix, d):
+    '''Input: 
+       - prefix is for the output filename,
+       - d is the dict of dicts with datasets
+    '''
+    plt.clf()
+
+    width = 0.35
+    y = numpy.arange(0.5, len(labels)/2.0+0.5, 0.5)
+
+    scilifelabgreen=(0.523, 0.738, 0.281)
+    scilifelabblue=(0.0469, 0.586, 0.684)
+    p1 = plt.barh(y, complete, width, color=scilifelabgreen, align='center')
+    p2 = plt.barh(y, partial, width, color=scilifelabblue, left=complete, align='center')
+
+    plt.xlabel('# cDNA in assemblies')
+    plt.title('Gene content')
+#plt.yticks(map(lambda yy: yy+width/2, y), labels)
+    plt.yticks(y, labels)
+#    plt.xticks([25, 50, 75, 100, 125, 150, 175, 200, 225, 250])
+    plt.locator_params(nbins=4)
+    plt.legend( (p1[0], p2[0]), ('Complete', 'Partial'), loc='lower right')
+#plt.grid(axis='x', color='gray', linestyle='dashed', which='both', zorder=0)
+    plt.tight_layout()
+
+    autolabel(plt, p2, total)
+
+    file_name = prefix +'_contents.pdf' # output file. Suffix decides format
+    plt.savefig(file_name, transparent=True)
+    
+
+def plot_utrs(prefix, d):
+    '''Input: 
+       - prefix is for the output filename,
+       - d is the dict of dicts with datasets
+    '''
+    
+    plt.clf()
+    f, (ax5p, ax3p) = plt.subplots(1,2, sharey=True)
+    ax5p.locator_params(nbins=4)
+    ax3p.locator_params(nbins=4)
+  
+    for name in d.keys():
+        three_prime_extent = d[name]['three_prime_extent']
+        five_prime_extent = map(lambda x: -x, d[name]['five_prime_extent'])
+        x5 = np.array(five_prime_extent)
+        left = min(x5)
+        x3 = np.array(three_prime_extent)
+        right= max(x3)
+
+        #sns.kdeplot(x5,             cut=1, ax=ax5p)
+        #sns.kdeplot(x3, label=name, cut=1, ax=ax3p)
+        sns.kdeplot(x5,             clip=(left, 0), ax=ax5p)
+        sns.kdeplot(x3, label=name, clip=(0, right), ax=ax3p)
+
+
+    ax5p.set_title('Possible UTR extent')
+#    ax5p.xlabel("UTR extent on 5' and 3' end of CDS")  
+    plt.legend(fontsize='x-small')
+    file_name = prefix +'_utrs.pdf' # output file. Suffix decides format
+    plt.savefig(file_name, transparent=True)
+
+
+def plot_cdna_coverage(prefix, d):
+    '''Input: 
+       - prefix is for the output filename,
+       - d is a dictionary containing (somewhere...) coverage is a list of numbers saying how much of cDNA was mapped.
+    '''
+    plt.clf()
+    plt.title('cDNA coverage')
+    plt.xlabel("")
+#    plt.xlim(0,1)
+    
+    names = d.keys()
+    data = map(lambda n: d[n]['cDNA_coverage'].values(), names)
+#    for name in d.keys():
+#        data[name] = d[name]['cDNA_coverage']
+
+        #    plt.violinplot(data) # Only works in matplotlib version 1.4
+    plt.boxplot(data)
+
+
+#        x = np.array(d[name]['cDNA_coverage'])
+#        sns.kdeplot(x, label=name)
+#        plt.hist(x, 20, histtype='step', label=name)
+
+#    plt.legend(fontsize='x-small')
+    file_name = prefix +'_cdna_coverage.pdf' # output file. Suffix decides format
+    plt.savefig(file_name, transparent=True)
+
+
+
+if __name__ == "__main__":
+
+    # Requires python 2.7 or later (due to the dictionary comprehensions?)
+    if sys.version_info[0] < 2 or (sys.version_info[0] >= 2 and sys.version_info[1] < 7):
+        print("This script requires Python version 2.7 or later")
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(description='Take one or several JSON files from petimeter and plot the distributions.')
+    parser.add_argument('output_prefix')
+    parser.add_argument('jsonfiles', nargs='+')
+
+    args = parser.parse_args()
+
+    data={}                     # We will collect all data here for plotting
+    for f in args.jsonfiles:
+        try:
+            j_file = open(f)
+            rawdata = json.load(j_file)
+        except Exception, e:
+            sys.stderr.write("Warning: Could not read JSON data from file '" + f + "'. Ignoring and continuing.\n")
+
+        dataset_name = rawdata.get('name')
+        if dataset_name:
+            del rawdata['name'] # 'name' is meta data, the rest /should/ be data for plotting
+        else:
+            sys.stderr.write("Warning: file '" + f + "' is probably not output from petimeter: the dataset name (may be filename) is missing. Ignoring and continuing.\n")
+            continue
+
+        data[dataset_name] = {}
+        for k in rawdata.keys():
+            data[dataset_name][k] = rawdata[k]
+
+
+    plot_utrs(args.output_prefix, data)
+    plot_cdna_coverage(args.output_prefix, data)
+
+

@@ -1,0 +1,266 @@
+#! /bin/env python
+
+# For usage, use option '-h'
+# Requires python 2.7 or later (due to the dictionary comprehensions?)
+
+from Bio import SeqIO
+import gffutils
+import sys
+import os.path
+from collections import Counter
+import json
+import numpy
+import argparse
+from termcolor import colored
+
+verbose = True
+
+# Constants
+min_coverage_for_complete_gene = 0.95 # Require that 95% of the cDNA is matching the genomic region to be called complete
+utr_overhang_for_complete_cds = 3     # For claiming "CDS complete", we require that there are this many nt from a UTR also matching.
+
+def collectResults(stats, genesPerContig):
+    ''' 
+    In: A list of stats (from getStats) and a count of genes on all contigs.
+        If plotfile is not False, then collect the numerical data.
+    Out: Two  dictionaries. One dictionary with summary statistics, suitable 
+        for output in JSON format, one dictionary with data for plotting.
+    '''
+    plotdata = {}
+    results = {}
+    results['genes_per_contig'] = descriptives(genesPerContig.values())
+    results['genes_per_contig']['max_contig'] = max(genesPerContig.iterkeys(), key=(lambda key: genesPerContig[key]))
+
+    fivePrimeExtents = map(lambda s: s['5prime_extent'], stats)
+    plotdata['five_prime_extent'] = fivePrimeExtents
+    results['five_prime_extent'] = descriptives(fivePrimeExtents)
+
+    threePrimeExtents = map(lambda s: s['3prime_extent'], stats)
+    plotdata['three_prime_extent'] = threePrimeExtents
+    results['three_prime_extent'] = descriptives(threePrimeExtents)
+
+    cDNACoverage = map(lambda s: s['covered'][1], stats)
+    transcriptnames = map(lambda s: s['transcript'], stats)
+    plotdata['cDNA_coverage'] = dict(zip(transcriptnames, cDNACoverage))
+    results['cDNA_coverage'] = descriptives(cDNACoverage)
+
+    results['completeness'] = {}
+    results['completeness']['cDNA'] = len(filter(lambda x: x['covered'][1] > min_coverage_for_complete_gene, stats))
+    results['completeness']['CDS'] = len(filter(lambda x: x['cds_complete'], stats))
+
+    return (results, plotdata)
+
+
+def descriptives(l):
+    '''Use scipy module to compute descriptive statistics on a list.'''
+    m = numpy.mean(l)
+    median = numpy.median(l)
+    try:
+        stdev = numpy.std(l)
+    except:
+        stdev = float('NaN')    # In case there is no variation in the data!
+
+    return {
+        'mean' : m,
+        'median' : median,
+        'stdev' : stdev,
+        'max' : max(l),
+        'min' : min(l)
+        }
+
+
+def getStats(db, gene):
+    geneName = gene.attributes['Name'][0]
+    cdnaLength = cdnaLengths[geneName]
+    if not aLengths.get(gene.seqid):
+        sys.stderr.write(colored("Error: '" + gene.seqid + "' is not found in the assembly. Aborting.\n", 'red'))
+        sys.exit(2)
+    contigLength = aLengths[gene.seqid]
+
+    # Some simple stats: 
+    # - Size of 5' flank
+    # - Size of 3' flank
+    # - how much of cDNA is matched
+    stats = dict()
+    stats['transcript'] = geneName
+    stats['5prime_extent'] = gene.start - 1
+    stats['3prime_extent'] = contigLength - gene.end + 1
+    stats['covered'] = (geneName, min(cdnaLength, gene.end - gene.start + 1) / float(cdnaLength)) # Cannot be > 100%
+
+    # More work: Are we getting the whole CDS? We assume that the cDNA
+    # we work with contains both 5' and 3' UTR. Therefore, if we have
+    # the whole CDS, the start/end of CDS should be well within the
+    # exons. To deal with uneven codon boundaries in fragmented hits,
+    # we demand that the difference is at least a codon.
+    cdsBoundaries=[]
+    for cds in db.children(gene, featuretype='CDS'):
+        cdsBoundaries.extend([cds.start, cds.end])
+    
+    if not cdsBoundaries:                       # No CDS?
+        stats['cds_complete'] = False
+    elif min(cdsBoundaries) - gene.start < 3: # No 5' UTR in hit
+        stats['cds_complete'] = False
+    elif  gene.end - max(cdsBoundaries) < 3: # No 3' UTR in hit
+        stats['cds_complete'] = False
+    else:
+        stats['cds_complete'] = True # Hit passed both tests, there seems to be a complete CDS
+
+    return stats
+
+
+def matchedLength(db, gene):
+    '''
+    Figure out how long the cDNA match is: ignore introns.
+    Return the total length of exons for a gene.
+    '''
+    l = 0
+    for exon in db.children(gene, featuretype='exon'):
+        l += exon.end - exon.start + 1
+    return l
+
+
+def selectHits(db):
+    '''
+    Some cDNA have many hits. We pick the one which matches the cDNA the most.
+    Return a dictionary with the selected genes.
+    '''
+    genes = dict()
+    for gene in db.all_features(featuretype='gene'):
+        name = gene.attributes['Name'][0]
+        currentLength = matchedLength(db, gene)
+        if name in genes:
+            oldLength = genes[name][0]
+            if currentLength > oldLength: # Update if current gene has longer match
+                genes[name] = (currentLength, gene)
+        else:
+            genes[name] = (currentLength, gene)
+            
+    return map(lambda g: g[1], genes.values())
+
+
+def output_files(prefix):
+    '''
+    In: a filename prefix
+    Out: three file handles, for assessment output, plotting data, and gene list.
+    '''
+    # Output filenames
+    main_output_file = prefix + "_assessment.json"
+    plotting_output_file = prefix + "_plotdata.json"
+    gene_list_file = prefix + "_ids.json"
+
+    try:
+        oh = open(main_output_file, "w")
+        ph = open(plotting_output_file, "w")
+        gh = open(gene_list_file, "w")
+    except: 
+        stderr.write("Could not open output file ('" + main_output_file + "', '" + plotting_output_file + "', or '" + gene_list_file + "') for writing. Aborting.")
+        exit(1)
+
+    return (oh, ph, gh)
+
+############################################################################################################
+if __name__ == "__main__":
+
+    # Requires python 2.7 or later (due to the dictionary comprehensions?)
+    if sys.version_info[0] < 2 or (sys.version_info[0] >= 2 and sys.version_info[1] < 7):
+        print("This script requires Python version 2.7 or later")
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(description='Assess assembly quality using cDNA data.', epilog='Regular output, a summary of statistics, is written to the output file in JSON format.')
+    parser.add_argument('prefix', help='Used to create output filenames.')
+    parser.add_argument('assembly_file', help='Assembly in FASTA format')
+    parser.add_argument('cdna_file', help='cDNA data in FASTA format')
+    parser.add_argument('gff_file', help='Result of mapping the cDNA to the assembly, in GFF format. There are no intentional requirements on which tool for producing this file, but we have only tested with GMAP.')
+    parser.add_argument('-q', '--quiet', action='store_true', help='Do not show progress messages')
+    parser.add_argument('-n', '--name', help='Give the test a name. This is useful when later combining several tests together, for example for plotting, when this name is used in the legend. If no name is given, the base name of the assembly file is used.')
+
+    args = parser.parse_args()
+
+    if args.quiet:
+        verbose = False
+
+    # Try to create the output files already here so that we know we can save everything
+    # Files: standard assessment, plotting data, and transcript hit list
+    (oh, ph, hh) = output_files(args.prefix)
+
+    # Store contig lengths in a dictionary
+    aLengths = dict()
+    i=0
+    try:
+        for r in SeqIO.parse(args.assembly_file, 'fasta'):
+            s = r.seq
+            id = r.id
+            k = id.replace(':', '_')    # Fermi contigs contain colons, and gmap seems to replace those with underscores! Stoopid.
+            aLengths[k] = len(s)
+            i += 1
+    except MemoryError:
+        sys.stderr.write('Out of memory after reading ' + string(i) + ' contigs. Last contig was: ' + id)
+        exit(1)
+        
+    inputdata={}
+    inputdata['assembly_file'] = args.assembly_file
+    inputdata['cdna_file'] = args.cdna_file
+    inputdata['gff_file'] = args.gff_file
+    if args.name:
+        inputdata['name'] = args.name
+    else:
+        inputdata['name'] = os.path.basename(args.assembly_file)
+
+    inputdata['n_contigs']=len(aLengths.keys())
+    if verbose:
+        fname = os.path.basename(str(inputdata['n_contigs']))
+        sys.stderr.write('#contigs/scaffolds in ' + args.assembly_file + ': ' + fname + '\n')
+
+    # Store cDNA length in another dict
+    cdnaLengths = dict()
+    for r in SeqIO.parse(args.cdna_file, 'fasta'):
+        cdnaLengths[r.id] = len(r.seq)
+
+    inputdata['n_cDNA'] = len(cdnaLengths.keys())
+    if verbose:
+        fname = os.path.basename(str(inputdata['n_cDNA']))
+        sys.stderr.write('#cDNA in ' + args.cdna_file + ': ' + fname + '\n')
+
+    # The gffutils require a SQLite3 database for its operations
+    gffDB = args.gff_file + ".sqlite3"
+    
+    if os.path.isfile(gffDB):   # Ooh, we already have the DB from a previous attempt. Probably.
+        if verbose:
+            sys.stderr.write(colored('Found pre-existing GFF database: ' + gffDB + '\n', 'green'))
+        try:
+            db = gffutils.FeatureDB(gffDB)
+        except:
+            sys.stderr.write(colored("Error: Something went wrong when trying to open GFF database '" + gffDB + "'. Aborting.\n", 'red'))
+            exit(1)
+
+    else:                       # Let's create it frmo scratch.
+        if verbose:
+            sys.stderr.write('Creating GFF database "' + gffDB + '"\n')
+
+        try:
+            db = gffutils.create_db(args.gff_file, gffDB)
+        except:
+            sys.stderr.write(colored("Error: Could not create GFF database '" + gffDB + "'. Aborting.\n", 'red'))
+            exit(1)
+
+    # We want to count the number of genes per contig. Store a gene->count map in a subclass of dict: Counter
+    genesPerContig = Counter()
+
+    # Reduce to one gene per cDNA
+    genes = selectHits(db)
+
+    # Go through selected genes and collect statistics
+    stats = []
+    for gene in genes:
+        stats.append(getStats(db, gene))
+        genesPerContig[gene.seqid] += 1
+
+    (results, plotdata) = collectResults(stats, genesPerContig)
+    results['input'] = inputdata
+    plotdata['name'] = inputdata['name']
+    json.dump(results, oh, indent=2)
+    json.dump(plotdata, ph)
+    
+
+
+    

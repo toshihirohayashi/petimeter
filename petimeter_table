@@ -1,0 +1,148 @@
+#! /bin/env python
+import json
+import argparse
+from sys import stdout,stderr
+
+n_decimals = 2
+
+def print_descriptors(detailed, d, pre_string, post_string):
+    l = ['mean','stdev']
+    if detailed:
+        l = ['mean','stdev','median','min','max']
+
+    for k in l:
+        stdout.write('{}{:.{}f}{}'.format(pre_string, d[k], n_decimals, post_string))
+
+
+def print_csv(detailed, d, elements):
+    if detailed:
+        print ",Completeness,,cDNA coverage,,,,,5' extent,,,,, 3' extent,,,,,Genes per contig"
+        print ",cDNA, CDS,mean, SD, median, min, max,mean, SD, median, min, max,mean, SD, median, min, max,mean, SD, median, min, max"
+    else:
+        print ",Completeness,,cDNA coverage,,5' extent,, 3' extent,,Genes per contig"
+        print ",cDNA, CDS, mean, SD, mean, SD, mean, SD, mean, SD"
+
+    for k in d.keys():
+        stdout.write('{},{},{},'.format(k,d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
+        for e in elements:
+            print_descriptors(detailed, d[k][e], '', ',')
+            
+        print                       # Get a line break between datasets
+    
+
+def print_text(detailed, d, elements):
+    longest_name = max(map(len, d.keys()))
+    prefix = ' ' * (longest_name + 1)
+    if detailed: 
+        print prefix + "|Completeness|      cDNA coverage       |         5' extent        |         3' extent        |     Genes per contig"
+        print prefix + "| cDNA   CDS | mean   SD med.  min  max | mean   SD med.  min  max | mean   SD med.  min  max | mean   SD med.  min  max"
+    else:
+        print prefix + "|Completeness|cDNA cov. |    5' extent   |    3' extent   |Genes/contig"
+        print prefix + "| cDNA   CDS | mean  SD |   mean     SD  |   mean     SD  | mean  SD"
+
+    for k in d.keys():
+        stdout.write('{:<{}} |{:>5} {:>5} '.format(k, longest_name, d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
+        for e in elements:
+            stdout.write('|')
+            print_descriptors(detailed, d[k][e], ' ', '')
+            
+        print                       # Get a line break between datasets
+    
+
+
+
+def print_html(detailed, d, elements):
+    if detailed:
+        print '<html><head><style type="text/css">table {border: solid black 1px; border-collapse: collapse;} th, td {border: solid black 1px;} td {text-align: right;}</style></head><body>'
+        print '<table><tr><th></th><th colspan=2>Completeness</th><th colspan=5>cDNA coverage</th><th colspan=5>5\' extent</th><th colspan=5>3\' extent</th><th colspan=5>Genes per contig</th></tr>'
+        print "<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>SD</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>SD</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>SD</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>SD</th><th>median</th><th>min</th><th>max</th></tr>"
+    else:
+        print '<html><head><style type="text/css">table {border: solid black 1px; border-collapse: collapse;} th, td {border: solid black 1px;} td {text-align: right;}</style></head><body>'
+        print '<table><tr><th></th><th colspan=2>Completeness</th><th colspan=2>cDNA coverage</th><th colspan=2>5\' extent</th><th colspan=2>3\' extent</th><th colspan=2>Genes per contig</th></tr>'
+        print "<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>SD</th><th>mean</th><th>SD</th><th>mean</th><th>SD</th><th>mean</th><th>SD</th></tr>"
+
+
+    for k in d.keys():
+        stdout.write('<tr><td>{}</td><td>{}</td><td>{}</td>'.format(k,d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
+        for e in elements:
+            print_descriptors(detailed, d[k][e], '<td>', '</td>')
+
+        print '</tr>'
+    print "</table></body></html>"
+
+
+def safe_latex_string(s):
+    return s.replace('_', '\_')
+
+def print_latex(detailed, d, elements):
+    n_cols = len(elements)*5 + 2
+    alignment = 'r' * 5
+    header = '|rr' + ('|' + alignment) * len(elements)
+    print '\\documentclass{article}\\usepackage[a4paper,landscape,margin=2cm]{geometry}\\begin{document}{\\footnotesize\\begin{tabular}{l' + header + '} '
+
+    if detailed:
+        print '&\\multicolumn{2}{|c|}{Completeness}&\\multicolumn{5}{|c|}{cDNA coverage}&\\multicolumn{5}{|c|}{5\' extent}&\\multicolumn{5}{|c|}{3\' extent}&\\multicolumn{5}{|c|}{Genes per contig}\\\\'
+        print "&cDNA&CDS&mean&SD&median&min&max&mean&SD&median&min&max&mean&SD&median&min&max&mean&SD&median&min&max\\\\\\hline"
+    else:
+        print '&\\multicolumn{2}{|c|}{Completeness}&\\multicolumn{2}{|c|}{cDNA coverage}&\\multicolumn{2}{|c|}{5\' extent}&\\multicolumn{2}{|c|}{3\' extent}&\\multicolumn{2}{|c|}{Genes per contig}\\\\'
+        print "&cDNA&CDS&mean&SD&mean&SD&mean&SD&mean&SD\\\\\\hline"
+
+    for k in d.keys():
+        stdout.write('{}&{}&{}'.format(safe_latex_string(k),d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
+        for e in elements:
+            print_descriptors(detailed, d[k][e], '&', '')
+
+        print '\\\\'
+    print '\\end{tabular}}\\end{document}'
+
+
+###########################################################################################
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Take one or several petimeter JSON output files and create a table summarusing results.')
+    parser.add_argument('-f', '--format', default='text', help='Choose output format: text (plan text, default), csv, html, latex, or markdown')
+    parser.add_argument('-d', '--decimals', default=2, help='Precision: choose the number of decimals.', type=int)
+    parser.add_argument('-l', '--long', action='store_true', help='More details in output table')
+    parser.add_argument('jsonfiles', nargs='+')
+
+    args = parser.parse_args()
+
+    data={}                     # We will collect all data here for plotting
+    for f in args.jsonfiles:
+        try:
+            j_file = open(f)
+            rawdata = json.load(j_file)
+        except Exception, e:
+            stderr.write("Warning: Could not read JSON data from file '" + f + "'. Ignoring and continuing.\n")
+
+        metadata = rawdata.get('input')
+        if metadata:
+            dataset_name = rawdata['input']['name']
+
+        else:
+            sys.stderr.write("Warning: file '" + f + "' is probably not output from petimeter: the dataset name (may be filename) is missing. Ignoring and continuing.\n")
+            continue
+
+        data[dataset_name] = {}
+        for k in rawdata.keys():
+            data[dataset_name][k] = rawdata[k]
+
+    if args.decimals:
+        n_decimals = args.decimals
+
+    # Completeness should always be printed, but I may decide to choose from the following
+    elements = ['cDNA_coverage', 'five_prime_extent', 'three_prime_extent', 'genes_per_contig']
+    if args.format == 'csv':
+        print_csv(args.long, data, elements)
+    elif args.format == 'txt' or args.format == 'text':
+        print_text(args.long, data, elements)
+    elif args.format == 'html':
+        print_html(args.long, data, elements)
+    elif args.format == 'latex':
+        print_latex(args.long, data, elements)
+    elif args.format == 'md' or args.format == 'markdown':
+        print "Markdown output not implemented yet."
+    else:
+        sys.stderr.write("Error: format '" + args.format + "' is not implemented by petimeter_table\n")
+        exit(1)
+

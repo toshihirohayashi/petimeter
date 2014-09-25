@@ -1,0 +1,92 @@
+#! /bin/env python
+import json
+import argparse
+import sys 
+import numpy
+
+def intersection(d, name1, name2):
+    '''
+    Compute how many genes assemblies 1 and 2 share.
+    '''
+
+    # Extract the dictionaries containing pairs of transcript name and transcript alignment extent ('coverage')
+    t1 = d[name1]['cDNA_coverage']
+    t2 = d[name2]['cDNA_coverage']
+
+    # Extract transcipt names as a set
+    s1 = set(t1.keys())
+    return len(s1.intersection(t2.keys()))
+
+
+def gene_correlation(d, name1, name2):
+    '''
+    Compute how much the gene (transcript) alignments correlate. If a gene is missing, it considered to zero alignment extent.
+    '''
+    # Extract the dictionaries containing pairs of transcript name and transcript alignment extent ('coverage')
+    t1 = d[name1]['cDNA_coverage']
+    t2 = d[name2]['cDNA_coverage']
+
+    # Get the union of transcript accessions
+    keys = list(t1.viewkeys() | t2.viewkeys())
+    return numpy.corrcoef(
+        [t1.get(x, 0) for x in keys],
+        [t2.get(x, 0) for x in keys])[0, 1]
+    
+    
+
+if __name__ == "__main__":
+
+    # Requires python 2.7 or later (due to the dictionary comprehensions?)
+    if sys.version_info[0] < 2 or (sys.version_info[0] >= 2 and sys.version_info[1] < 7):
+        print("This script requires Python version 2.7 or later")
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(description='Take two or several JSON files from petimeter and compute agreement on gene contents.')
+    parser.add_argument('-c', '--correlation', action="store_true", help='Output the correlation coefficient for the transcript alignment extent instead of gene count.')
+    parser.add_argument('jsonfile')
+    parser.add_argument('jsonfiles', nargs='+')
+
+    args = parser.parse_args()
+
+    print args
+
+    data={}                     # We will collect all data here for plotting
+    for f in [args.jsonfile] + args.jsonfiles:
+        try:
+            j_file = open(f)
+            rawdata = json.load(j_file)
+        except Exception, e:
+            sys.stderr.write("Warning: Could not read JSON data from file '" + f + "'. Ignoring and continuing.\n")
+            continue
+
+        dataset_name = rawdata.get('name')
+        if dataset_name:
+            del rawdata['name'] # 'name' is meta data, the rest /should/ be data for plotting
+        else:
+            sys.stderr.write("Warning: file '" + f + "' is probably not output from petimeter: the dataset name (may be filename) is missing. Ignoring and continuing.\n")
+            continue
+
+        if data.get(dataset_name):
+            sys.stderr.write("Error: There are two assemblies named '" + dataset_name + "' in the input. Aborting.\n")
+            exit(1)
+
+        data[dataset_name] = {}
+        for k in rawdata.keys():
+            data[dataset_name][k] = rawdata[k]
+
+    l = data.keys()
+    indentation = max(map(len, l))
+    for i in range(len(l)):
+        print "{:{}}".format(l[i], indentation),
+        for j in range(i):
+            if args.correlation:
+                x = gene_correlation(data, l[i], l[j])
+                print " {:6.3} ".format(x),
+            else: 
+                x = intersection(data, l[i], l[j])
+                print " {:6} ".format(x),
+        print
+        
+
+#    plot_utrs(args.output_prefix, data)
+#    plot_cdna_coverage(args.output_prefix, data)
