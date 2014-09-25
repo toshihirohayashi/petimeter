@@ -1,4 +1,4 @@
-#! /bin/env python
+#! /usr/bin/env python
 import json
 import argparse
 from sys import stdout,stderr
@@ -108,24 +108,31 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data={}                     # We will collect all data here for plotting
+    n_correct_files = 0
     for f in args.jsonfiles:
         try:
             j_file = open(f)
             rawdata = json.load(j_file)
+            n_correct_files += 1
         except Exception, e:
             stderr.write("Warning: Could not read JSON data from file '" + f + "'. Ignoring and continuing.\n")
+            continue
 
         metadata = rawdata.get('input')
         if metadata:
-            dataset_name = rawdata['input']['name']
+            dataset_name = metadata['name']
 
         else:
-            sys.stderr.write("Warning: file '" + f + "' is probably not output from petimeter: the dataset name (may be filename) is missing. Ignoring and continuing.\n")
+            stderr.write("Warning: file '" + f + "' is probably not output from petimeter: the dataset name (may be filename) is missing. Ignoring and continuing.\n")
             continue
 
         data[dataset_name] = {}
         for k in rawdata.keys():
             data[dataset_name][k] = rawdata[k]
+
+    if n_correct_files < 1:
+        stderr.write("Error: empty input -- no correct files in input.\n")
+        exit(2)
 
     if args.decimals:
         n_decimals = args.decimals
@@ -143,6 +150,6 @@ if __name__ == "__main__":
     elif args.format == 'md' or args.format == 'markdown':
         print "Markdown output not implemented yet."
     else:
-        sys.stderr.write("Error: format '" + args.format + "' is not implemented by petimeter_table\n")
+        stderr.write("Error: format '" + args.format + "' is not implemented by petimeter_table\n")
         exit(1)
 

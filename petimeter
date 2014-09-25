@@ -1,4 +1,4 @@
-#! /bin/env python
+#! /usr/bin/env python
 
 # For usage, use option '-h'
 # Requires python 2.7 or later (due to the dictionary comprehensions?)
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     results['input'] = inputdata
     plotdata['name'] = inputdata['name']
     json.dump(results, oh, indent=2)
-    json.dump(plotdata, ph)
+    json.dump(plotdata, ph, indent=2)
     
 
 
