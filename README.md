@@ -1,4 +1,4 @@
-Petimeter: a tool for assessing assembly quality based on cDNA
+# Petimeter: a tool for assessing assembly quality based on cDNA
 mappings
 
 The idea is to take full length cDNA from a closely related species
@@ -13,13 +13,13 @@ LaTeX). Simple plots are created by petimeter_plot. Both these
 tools can take petimeter output from several competing assemblies to
 enable comparative presentations.
 
-Input:
+## Input
 - A prefix for output file names
 - Assembly file in Fasta format
 - cDNA file in Fasta format
 - A GFF file 
 
-Output:
+## Output
 - A general assessment file 
 - A file with quantitative data for plotting etc.
 The output is in JSON format for easy parsing in most programming
