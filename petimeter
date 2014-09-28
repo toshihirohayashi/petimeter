@@ -181,20 +181,6 @@ if __name__ == "__main__":
     # Files: standard assessment, plotting data, and transcript hit list
     (oh, ph) = output_files(args.prefix)
 
-    # Store contig lengths in a dictionary
-    aLengths = dict()
-    i=0
-    try:
-        for r in SeqIO.parse(args.assembly_file, 'fasta'):
-            s = r.seq
-            id = r.id
-            k = id.replace(':', '_')    # Fermi contigs contain colons, and gmap seems to replace those with underscores! Stoopid.
-            aLengths[k] = len(s)
-            i += 1
-    except MemoryError:
-        sys.stderr.write('Out of memory after reading ' + string(i) + ' contigs. Last contig was: ' + id)
-        exit(1)
-        
     inputdata={}
     inputdata['assembly_file'] = args.assembly_file
     inputdata['cdna_file'] = args.cdna_file
@@ -203,11 +189,6 @@ if __name__ == "__main__":
         inputdata['name'] = args.name
     else:
         inputdata['name'] = os.path.basename(args.assembly_file)
-
-    inputdata['n_contigs']=len(aLengths.keys())
-    if verbose:
-        fname = os.path.basename(str(inputdata['n_contigs']))
-        sys.stderr.write('#contigs/scaffolds in ' + args.assembly_file + ': ' + fname + '\n')
 
     # Store cDNA length in another dict
     cdnaLengths = dict()
@@ -231,7 +212,7 @@ if __name__ == "__main__":
             sys.stderr.write(colored("Error: Something went wrong when trying to open GFF database '" + gffDB + "'. Aborting.\n", 'red'))
             exit(1)
 
-    else:                       # Let's create it frmo scratch.
+    else:                       # Let's create it from scratch.
         if verbose:
             sys.stderr.write('Creating GFF database "' + gffDB + '"\n')
 
@@ -240,6 +221,28 @@ if __name__ == "__main__":
         except:
             sys.stderr.write(colored("Error: Could not create GFF database '" + gffDB + "'. Aborting.\n", 'red'))
             exit(1)
+
+    # Store contig lengths in a dictionary
+    aLengths = dict()
+    i=0
+    try:
+        sys.stderr.write("Reading assembly '" + args.assembly_file + "'\n")
+        for r in SeqIO.parse(args.assembly_file, 'fasta'):
+            s = r.seq
+            id = r.id
+            k = id.replace(':', '_')    # Fermi contigs contain colons, and gmap seems to replace those with underscores! Stoopid.
+            aLengths[k] = len(s)
+            i += 1
+    except MemoryError:
+        sys.stderr.write('Out of memory after reading ' + string(i) + ' contigs. Last contig was: ' + id)
+        exit(1)
+
+    inputdata['n_contigs']=len(aLengths.keys())
+    if verbose:
+        fname = os.path.basename(str(inputdata['n_contigs']))
+        sys.stderr.write('#contigs/scaffolds in ' + args.assembly_file + ': ' + fname + '\n')
+
+        
 
     # We want to count the number of genes per contig. Store a gene->count map in a subclass of dict: Counter
     genesPerContig = Counter()
