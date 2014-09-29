@@ -209,7 +209,7 @@ if __name__ == "__main__":
         try:
             db = gffutils.FeatureDB(gffDB)
         except:
-            sys.stderr.write(colored("Error: Something went wrong when trying to open GFF database '" + gffDB + "'. Aborting.\n", 'red'))
+            sys.stderr.write(colored("Error: Something went wrong ('" + str(sys.exc_info()[0]) + "') when trying to open GFF database '" + gffDB + "'. Aborting.\n", 'red'))
             exit(1)
 
     else:                       # Let's create it from scratch.
@@ -219,7 +219,7 @@ if __name__ == "__main__":
         try:
             db = gffutils.create_db(args.gff_file, gffDB)
         except:
-            sys.stderr.write(colored("Error: Could not create GFF database '" + gffDB + "'. Aborting.\n", 'red'))
+            sys.stderr.write(colored("Error ('" + str(sys.exc_info()[0]) + "'): Could not create GFF database '" + gffDB + "'. Aborting.\n", 'red'))
             exit(1)
 
     # Store contig lengths in a dictionary
