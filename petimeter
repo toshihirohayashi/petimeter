@@ -152,7 +152,7 @@ def output_files(prefix):
         ph = open(plotting_output_file, "w")
     except: 
         stderr.write("Could not open output file ('" + main_output_file + "' and/or '" + plotting_output_file + "') for writing. Aborting.")
-        exit(1)
+        exit(3)
 
     return (oh, ph)
 
@@ -218,6 +218,9 @@ if __name__ == "__main__":
 
         try:
             db = gffutils.create_db(args.gff_file, gffDB)
+        except ValueError:      # GFFUtils seems to return ValueError when it cannot find the file!
+            sys.stderr.write(colored("Error: Are you sure '" + args.gff_file + "' is a GFF file?\n"))
+            exit(4)
         except:
             sys.stderr.write(colored("Error ('" + str(sys.exc_info()[0]) + "'): Could not create GFF database '" + gffDB + "'. Aborting.\n", 'red'))
             exit(1)
