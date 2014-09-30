@@ -145,7 +145,7 @@ def output_files(prefix):
     '''
     # Output filenames
     main_output_file = prefix + "_assessment.json"
-    plotting_output_file = prefix + "_plotdata.json"
+    plotting_output_file = prefix + "_details.json"
 
     try:
         oh = open(main_output_file, "w")
@@ -164,7 +164,7 @@ if __name__ == "__main__":
         print("This script requires Python version 2.7 or later")
         sys.exit(1)
 
-    parser = argparse.ArgumentParser(description='Assess assembly quality using cDNA data.', epilog='Regular output, a summary of statistics, is written to the output file in JSON format.')
+    parser = argparse.ArgumentParser(description='Assess assembly quality using cDNA data.', epilog='Output is given in two files: prefix_assessment.json and prefix_details.json (with "prefix" given by the user as first argument), both in JSON format. The assessment file can be read by petimeter_table and the details file is meant for petimeter_plot and petimeter_agreement.')
     parser.add_argument('prefix', help='Used to create output filenames.')
     parser.add_argument('assembly_file', help='Assembly in FASTA format')
     parser.add_argument('cdna_file', help='cDNA data in FASTA format')
