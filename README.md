@@ -20,7 +20,8 @@ enable comparative presentations.
 
 ## Output
 - A general assessment file 
-- A file with quantitative data for plotting etc.
+- A "details" file with quantitative data for plotting etc.
+
 The output is in JSON format for easy parsing in most programming
 languages. 
 
@@ -43,5 +44,5 @@ wih 3.0.
 The word "petimeter" is Swedish for "picky person" and is derived from
 the French "petit-maître".
 
-"En petimeter skulle stava 'petimeter' som 'petimäter'."
+"Bara en petimeter kräver att 'petimeter' stavas 'petimäter'."
 
