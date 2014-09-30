@@ -87,13 +87,13 @@ if __name__ == "__main__":
         print "{:{}}".format(l[i], indentation),
         for j in range(len(l)):
             if i == j:
-                print ' ' * 8,
+                print ' ' * 10,
             elif args.correlation:
                 x = gene_correlation(data, l[i], l[j])
-                print " {:6.3} ".format(x),
+                print " {:8.3} ".format(x),
             else: 
                 x = intersection(data, l[i], l[j])
-                print " {:6} ".format(x),
+                print " {:8} ".format(x),
         print
         
 
