@@ -85,8 +85,10 @@ if __name__ == "__main__":
     indentation = max(map(len, l))
     for i in range(len(l)):
         print "{:{}}".format(l[i], indentation),
-        for j in range(i):
-            if args.correlation:
+        for j in range(len(l)):
+            if i == j:
+                print ' ' * 8,
+            elif args.correlation:
                 x = gene_correlation(data, l[i], l[j])
                 print " {:6.3} ".format(x),
             else: 
