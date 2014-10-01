@@ -4,8 +4,8 @@ import argparse
 import sys 
 import matplotlib.pyplot as plt
 import functools
-#import seaborn as sns
-#import numpy as np
+import seaborn as sns
+import numpy as np
 
 
 #[name]['cdna_coverage'])
@@ -202,7 +202,7 @@ def plot_counts(prefix, d):
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     legend = ax.legend(bbox_to_anchor=(1.25, 1))
     for label in legend.get_texts():
-        label.set_fontsize('small')
+        label.set_fontsize('x-small')
 
 
     ax.grid(color='gray', linestyle='dashed', which='both')
@@ -278,7 +278,7 @@ if __name__ == "__main__":
         for k in rawdata.keys():
             data[dataset_name][k] = rawdata[k]
 
-#    plot_utrs(args.output_prefix, args.max_extent, data)
-#    plot_cdna_coverage(args.output_prefix, data)
-#    plot_bars(args.output_prefix, data)
+    plot_utrs(args.output_prefix, args.max_extent, data)
+    plot_cdna_coverage(args.output_prefix, data)
+    plot_bars(args.output_prefix, data)
     plot_counts(args.output_prefix, data)
