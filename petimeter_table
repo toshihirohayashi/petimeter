@@ -17,10 +17,10 @@ def print_descriptors(detailed, d, pre_string, post_string):
 def print_csv(detailed, d, elements):
     if detailed:
         print ",Completeness,,cDNA coverage,,,,,5' extent,,,,, 3' extent,,,,,Genes per contig"
-        print ",cDNA, CDS,mean, SD, median, min, max,mean, SD, median, min, max,mean, SD, median, min, max,mean, SD, median, min, max"
+        print ",cDNA, CDS,mean, sd, median, min, max,mean, sd, median, min, max,mean, sd, median, min, max,mean, sd, median, min, max"
     else:
         print ",Completeness,,cDNA coverage,,5' extent,, 3' extent,,Genes per contig"
-        print ",cDNA, CDS, mean, SD, mean, SD, mean, SD, mean, SD"
+        print ",cDNA, CDS, mean, sd, mean, sd, mean, sd, mean, sd"
 
     for k in d.keys():
         stdout.write('{},{},{},'.format(k,d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
@@ -32,13 +32,14 @@ def print_csv(detailed, d, elements):
 
 def print_text(detailed, d, elements):
     longest_name = max(map(len, d.keys()))
+    print longest_name
     prefix = ' ' * (longest_name + 1)
     if detailed: 
         print prefix + "|Completeness|      cDNA coverage       |         5' extent        |         3' extent        |     Genes per contig"
-        print prefix + "| cDNA   CDS | mean   SD med.  min  max | mean   SD med.  min  max | mean   SD med.  min  max | mean   SD med.  min  max"
+        print prefix + "| cDNA   CDS | mean   sd med.  min  max | mean   sd med.  min  max | mean   sd med.  min  max | mean   sd med.  min  max"
     else:
         print prefix + "|Completeness|cDNA cov. |    5' extent   |    3' extent   |Genes/contig"
-        print prefix + "| cDNA   CDS | mean  SD |   mean     SD  |   mean     SD  | mean  SD"
+        print prefix + "| cDNA   CDS | mean  sd |   mean     sd  |   mean     sd  | mean  sd"
 
     for k in d.keys():
         stdout.write('{:<{}} |{:>5} {:>5} '.format(k, longest_name, d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
@@ -55,11 +56,11 @@ def print_html(detailed, d, elements):
     if detailed:
         print '<html><head><style type="text/css">table {border: solid black 1px; border-collapse: collapse;} th, td {border: solid black 1px;} td {text-align: right;}</style></head><body>'
         print '<table><tr><th></th><th colspan=2>Completeness</th><th colspan=5>cDNA coverage</th><th colspan=5>5\' extent</th><th colspan=5>3\' extent</th><th colspan=5>Genes per contig</th></tr>'
-        print "<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>SD</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>SD</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>SD</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>SD</th><th>median</th><th>min</th><th>max</th></tr>"
+        print "<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th></tr>"
     else:
         print '<html><head><style type="text/css">table {border: solid black 1px; border-collapse: collapse;} th, td {border: solid black 1px;} td {text-align: right;}</style></head><body>'
         print '<table><tr><th></th><th colspan=2>Completeness</th><th colspan=2>cDNA coverage</th><th colspan=2>5\' extent</th><th colspan=2>3\' extent</th><th colspan=2>Genes per contig</th></tr>'
-        print "<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>SD</th><th>mean</th><th>SD</th><th>mean</th><th>SD</th><th>mean</th><th>SD</th></tr>"
+        print "<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th></tr>"
 
 
     for k in d.keys():
@@ -82,10 +83,10 @@ def print_latex(detailed, d, elements):
 
     if detailed:
         print '&\\multicolumn{2}{|c|}{Completeness}&\\multicolumn{5}{|c|}{cDNA coverage}&\\multicolumn{5}{|c|}{5\' extent}&\\multicolumn{5}{|c|}{3\' extent}&\\multicolumn{5}{|c|}{Genes per contig}\\\\'
-        print "&cDNA&CDS&mean&SD&median&min&max&mean&SD&median&min&max&mean&SD&median&min&max&mean&SD&median&min&max\\\\\\hline"
+        print "&cDNA&CDS&mean&sd&median&min&max&mean&sd&median&min&max&mean&sd&median&min&max&mean&sd&median&min&max\\\\\\hline"
     else:
         print '&\\multicolumn{2}{|c|}{Completeness}&\\multicolumn{2}{|c|}{cDNA coverage}&\\multicolumn{2}{|c|}{5\' extent}&\\multicolumn{2}{|c|}{3\' extent}&\\multicolumn{2}{|c|}{Genes per contig}\\\\'
-        print "&cDNA&CDS&mean&SD&mean&SD&mean&SD&mean&SD\\\\\\hline"
+        print "&cDNA&CDS&mean&sd&mean&sd&mean&sd&mean&sd\\\\\\hline"
 
     for k in d.keys():
         stdout.write('{}&{}&{}'.format(safe_latex_string(k),d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
@@ -123,7 +124,14 @@ if __name__ == "__main__":
             dataset_name = metadata['name']
 
         else:
-            stderr.write("Warning: file '" + f + "' is probably not output from petimeter: the dataset name (may be filename) is missing. Ignoring and continuing.\n")
+            format_version = rawdata.get('assessment_format')
+            details_format = rawdata.get('details_format')
+            if details_format:
+                stderr.write("Warning: file '" + f + "' is a details-file from petimeter. Use the assessment-file instead! Ignoring and continuing.\n") 
+            elif format_version > 1:
+                stderr.write("Warning: file '" + f + "' seems to be an assessment-file of a later format. This tool cannot read it.\n")     
+            else:
+                stderr.write("Warning: file '" + f + "' is probably not output from petimeter: the dataset name (may be filename) is missing. Ignoring and continuing.\n")
             continue
 
         data[dataset_name] = {}
