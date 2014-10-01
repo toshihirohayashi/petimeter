@@ -90,12 +90,12 @@ def plot_bars(prefix, d):
     
 #############################################################################################
 
-def minmax_of_x_percent_of_list(l):
+def minmax_of_x_percent_of_list(x, l):
     '''
     Return the smallest of the top 95% values and largest of the bottom 95% values.
     '''
     s = l.sorted()
-    five_percent = 0.05 * len(s)
+    five_percent = (1-x) * len(s) # Not really 5% any more... Now it is adjustable!
     return (min(s[int(five_percent):-1]), max(s[0:len(s) - int(five_percent) - 1]))
 
 
@@ -108,9 +108,9 @@ def find_x_percent_extents(x, d):
         three_prime_extent = d[name]['three_prime_extent']
         five_prime_extent = map(lambda x: -x, d[name]['five_prime_extent'])
 
-        (a,b) = minmax_of_x_percent_of_list(five_prime_extent)
+        (a,b) = minmax_of_x_percent_of_list(x, five_prime_extent)
         left95p = min(left95p, a)
-        (a,b) = minmax_of_x_percent_of_list(three_prime_extent)
+        (a,b) = minmax_of_x_percent_of_list(x, three_prime_extent)
         right95p = max(right95p, b)
     return (left95p, right95p)
 
@@ -145,10 +145,12 @@ def plot_utrs(prefix, max_extent, d):
 
     if max_extent:
         if (max_extent < 1):
-            (left95p, right95p) = find_x_percent_extents(max_extent, d)
-            ax5p.xlims(left95p, right95p)
+            (left95p, right95p) = find_x_percent_extents(float(max_extent), d)
+            ax5p.set_xlim(left95p, 0)
+            ax3p.set_xlim(0, right95p)
         else:
-            ax5p.xlims(-max_extent, max_extent)
+            ax5p.set_xlim(-int(max_extent), 0)
+            ax3p.set_xlim(0, int(max_extent))
 
     ax5p.set_title('Possible UTR extent')
 #    ax5p.xlabel("UTR extent on 5' and 3' end of CDS")  
