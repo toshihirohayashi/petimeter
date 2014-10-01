@@ -200,7 +200,10 @@ def plot_counts(prefix, d):
     # Shrink current axis by 20%
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-    ax.legend(bbox_to_anchor=(1, 1))
+    legend = ax.legend(bbox_to_anchor=(1.25, 1))
+    for label in legend.get_texts():
+        label.set_fontsize('small')
+
 
     ax.grid(color='gray', linestyle='dashed', which='both')
     file_name = prefix +'_counts.pdf' # output file. Suffix decides format
