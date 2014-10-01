@@ -143,14 +143,18 @@ def plot_utrs(prefix, max_extent, d):
         sns.kdeplot(x5,             clip=(left, 0), ax=ax5p)
         sns.kdeplot(x3, label=name, clip=(0, right), ax=ax3p)
 
+    percentile = 0.95
     if max_extent:
         if (max_extent < 1):
-            (left95p, right95p) = find_x_percent_extents(float(max_extent), d)
-            ax5p.set_xlim(left95p, 0)
-            ax3p.set_xlim(0, right95p)
+            percentile = float(max_extent)
         else:
             ax5p.set_xlim(-int(max_extent), 0)
             ax3p.set_xlim(0, int(max_extent))
+    else:
+        (left_percentile, right_percentile) = find_x_percent_extents(percentile, d)
+        ax5p.set_xlim(left_percentile, 0)
+        ax3p.set_xlim(0, right_percentile)
+
 
     ax5p.set_title('Possible UTR extent')
 #    ax5p.xlabel("UTR extent on 5' and 3' end of CDS")  
