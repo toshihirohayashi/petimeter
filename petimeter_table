@@ -1,7 +1,8 @@
 #! /usr/bin/env python
+# Requires python 2.7 or later
 import json
 import argparse
-from sys import stdout,stderr
+from sys import stdout,stderr,version_info
 
 n_decimals = 2
 
@@ -14,7 +15,7 @@ def print_descriptors(detailed, d, pre_string, post_string):
         stdout.write('{}{:.{}f}{}'.format(pre_string, d[k], n_decimals, post_string))
 
 
-def print_csv(detailed, d, elements):
+def print_csv(detailed, d, elements, l):
     if detailed:
         print ",Completeness,,cDNA coverage,,,,,5' extent,,,,, 3' extent,,,,,Genes per contig"
         print ",cDNA, CDS,mean, sd, median, min, max,mean, sd, median, min, max,mean, sd, median, min, max,mean, sd, median, min, max"
@@ -22,7 +23,7 @@ def print_csv(detailed, d, elements):
         print ",Completeness,,cDNA coverage,,5' extent,, 3' extent,,Genes per contig"
         print ",cDNA, CDS, mean, sd, mean, sd, mean, sd, mean, sd"
 
-    for k in d.keys():
+    for k in l:
         stdout.write('{},{},{},'.format(k,d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
         for e in elements:
             print_descriptors(detailed, d[k][e], '', ',')
@@ -30,7 +31,7 @@ def print_csv(detailed, d, elements):
         print                       # Get a line break between datasets
     
 
-def print_text(detailed, d, elements):
+def print_text(detailed, d, elements, name_list):
     longest_name = max(map(len, d.keys()))
     prefix = ' ' * (longest_name + 1)
     if detailed: 
@@ -40,7 +41,7 @@ def print_text(detailed, d, elements):
         print prefix + "|Completeness|cDNA cov. |    5' extent   |    3' extent   |Genes/contig"
         print prefix + "| cDNA   CDS | mean  sd |   mean     sd  |   mean     sd  | mean  sd"
 
-    for k in d.keys():
+    for k in name_list:
         stdout.write('{:<{}} |{:>5} {:>5} '.format(k, longest_name, d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
         for e in elements:
             stdout.write('|')
@@ -51,7 +52,7 @@ def print_text(detailed, d, elements):
 
 
 
-def print_html(detailed, d, elements):
+def print_html(detailed, d, elements, name_list):
     if detailed:
         print '<html><head><style type="text/css">table {border: solid black 1px; border-collapse: collapse;} th, td {border: solid black 1px;} td {text-align: right;}</style></head><body>'
         print '<table><tr><th></th><th colspan=2>Completeness</th><th colspan=5>cDNA coverage</th><th colspan=5>5\' extent</th><th colspan=5>3\' extent</th><th colspan=5>Genes per contig</th></tr>'
@@ -62,7 +63,7 @@ def print_html(detailed, d, elements):
         print "<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th></tr>"
 
 
-    for k in d.keys():
+    for k in name_list:
         stdout.write('<tr><td>{}</td><td>{}</td><td>{}</td>'.format(k,d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
         for e in elements:
             print_descriptors(detailed, d[k][e], '<td>', '</td>')
@@ -74,7 +75,7 @@ def print_html(detailed, d, elements):
 def safe_latex_string(s):
     return s.replace('_', '\_')
 
-def print_latex(detailed, d, elements):
+def print_latex(detailed, d, elements, name_list):
     n_cols = len(elements)*5 + 2
     alignment = 'r' * 5
     header = '|rr' + ('|' + alignment) * len(elements)
@@ -87,7 +88,7 @@ def print_latex(detailed, d, elements):
         print '&\\multicolumn{2}{|c|}{Completeness}&\\multicolumn{2}{|c|}{cDNA coverage}&\\multicolumn{2}{|c|}{5\' extent}&\\multicolumn{2}{|c|}{3\' extent}&\\multicolumn{2}{|c|}{Genes per contig}\\\\'
         print "&cDNA&CDS&mean&sd&mean&sd&mean&sd&mean&sd\\\\\\hline"
 
-    for k in d.keys():
+    for k in name_list:
         stdout.write('{}&{}&{}'.format(safe_latex_string(k),d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
         for e in elements:
             print_descriptors(detailed, d[k][e], '&', '')
@@ -99,6 +100,11 @@ def print_latex(detailed, d, elements):
 ###########################################################################################
 
 if __name__ == "__main__":
+    # Requires python 2.7 or later (due to the dictionary comprehensions?)
+    if version_info[0] < 2 or (version_info[0] >= 2 and version_info[1] < 7):
+        print("This script requires Python version 2.7 or later")
+        exit(1)
+
     parser = argparse.ArgumentParser(description='Take one or several petimeter JSON output files and create a table summarusing results.')
     parser.add_argument('-f', '--format', default='text', help='Choose output format: text (plan text, default), csv, html, latex, or markdown')
     parser.add_argument('-d', '--decimals', default=2, help='Precision: choose the number of decimals.', type=int)
@@ -108,6 +114,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data={}                     # We will collect all data here for plotting
+    name_list=[]                # To preserve the order of the input
     n_correct_files = 0
     for f in args.jsonfiles:
         try:
@@ -121,6 +128,7 @@ if __name__ == "__main__":
         metadata = rawdata.get('input')
         if metadata:
             dataset_name = metadata['name']
+            name_list.append(dataset_name)
 
         else:
             format_version = rawdata.get('assessment_format')
@@ -147,13 +155,13 @@ if __name__ == "__main__":
     # Completeness should always be printed, but I may decide to choose from the following
     elements = ['cDNA_coverage', 'five_prime_extent', 'three_prime_extent', 'genes_per_contig']
     if args.format == 'csv':
-        print_csv(args.long, data, elements)
+        print_csv(args.long, data, elements, name_list)
     elif args.format == 'txt' or args.format == 'text':
-        print_text(args.long, data, elements)
+        print_text(args.long, data, elements, name_list)
     elif args.format == 'html':
-        print_html(args.long, data, elements)
+        print_html(args.long, data, elements, name_list)
     elif args.format == 'latex':
-        print_latex(args.long, data, elements)
+        print_latex(args.long, data, elements, name_list)
     elif args.format == 'md' or args.format == 'markdown':
         print "Markdown output not implemented yet."
     else:
