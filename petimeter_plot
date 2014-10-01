@@ -12,15 +12,40 @@ import numpy as np
 
 # Constants
 c_complete_threshold = 0.95     # 95% of a cDNAmust be aligned in order to count as "complete", otherwise partial.
+c_partial_threshold = 0.5
 
-def count_complete_and_partial(l):
+def count_complete_etc(l):
     '''
-    Count how many elements of l is larger than c_complete_threshold, are "complete". 
-    Return a pair of (complete, list length minus complete)
-    '''
-    n_complete = len(filter(lambda c: c >= c_complete_threshold, l))
-    return (n_complete, len(l)-n_complete)
+    Input: A list of values in [0,1] representing how much of a cDNA mapped to an assembly.
+    Output: a 3-tuple counting complete, partial, and fragmented genes.
     
+    We define the three classes as using two thresholds: c_complete_threshold and c_partial_threshold.
+    '''
+
+    n_complete = n_partial = n_fragmented = 0
+    for x in l:
+        if x >= c_complete_threshold:
+            n_complete += 1
+        elif x >= c_partial_threshold:
+            n_partial += 1
+        else:
+            n_fragmented += 1
+
+    return (n_complete, n_partial, n_fragmented)
+
+#############################################################################################
+
+
+def autolabel(a, rects, labels):
+    '''
+    Autolabel puts numbers at the top of bars in the plot_bars function.
+    '''
+    # attach some text labels
+    for rect in rects:
+        # width = rect.get_width()
+        w = labels.pop(0)
+        a.text(w-200, rect.get_y()+rect.get_height()/2, '%d'%int(w), ha='right', va='center', zorder=20)
+
 
 def plot_bars(prefix, d):
     '''Input: 
@@ -29,34 +54,74 @@ def plot_bars(prefix, d):
     '''
     plt.clf()
 
-    width = 0.35
-    y = numpy.arange(0.5, len(labels)/2.0+0.5, 0.5)
+    width = 0.3
+    labels = d.keys()    
+    y = np.arange(0.5, len(labels)/2.0+0.5, 0.5)
+    
+    counts = map(lambda n: count_complete_etc(d[n]['cDNA_coverage'].values()), labels)
+
+    completes = map(lambda x: x[0], counts)
+    partials  = map(lambda x: x[1], counts)
+    fragmented= map(lambda x: x[2], counts)
+    total = map(lambda a,b,c: a+b+c, completes, partials, fragmented)
 
     scilifelabgreen=(0.523, 0.738, 0.281)
     scilifelabblue=(0.0469, 0.586, 0.684)
-    p1 = plt.barh(y, complete, width, color=scilifelabgreen, align='center')
-    p2 = plt.barh(y, partial, width, color=scilifelabblue, left=complete, align='center')
+
+    p1 = plt.barh(y, completes,  width, color=scilifelabgreen, align='center', zorder=10)
+    p2 = plt.barh(y, partials,   width, color=scilifelabblue, left=completes, align='center', zorder=10)
+    p3 = plt.barh(y, fragmented, width, color="0.75", left=map(lambda a,b: a+b, completes,partials), align='center', zorder=10)
 
     plt.xlabel('# cDNA in assemblies')
-    plt.title('Gene content')
-#plt.yticks(map(lambda yy: yy+width/2, y), labels)
     plt.yticks(y, labels)
-#    plt.xticks([25, 50, 75, 100, 125, 150, 175, 200, 225, 250])
-    plt.locator_params(nbins=4)
-    plt.legend( (p1[0], p2[0]), ('Complete', 'Partial'), loc='lower right')
-#plt.grid(axis='x', color='gray', linestyle='dashed', which='both', zorder=0)
+    
+    l = plt.legend( (p1[0], p2[0], p3[0]), ('Complete', 'Partial', 'Fragment'), loc='upper center', ncol=3, prop={'size':10})
+    l.set_zorder(10)
+    ygridlines = plt.getp(plt.gca(), 'ygridlines')
+
+    plt.grid(axis='x', color='gray', linestyle='dashed', which='both')
+
     plt.tight_layout()
 
-    autolabel(plt, p2, total)
+    autolabel(plt, p3, total)
 
     file_name = prefix +'_contents.pdf' # output file. Suffix decides format
     plt.savefig(file_name, transparent=True)
     
+#############################################################################################
 
-def plot_utrs(prefix, d):
-    '''Input: 
+def minmax_of_x_percent_of_list(l):
+    '''
+    Return the smallest of the top 95% values and largest of the bottom 95% values.
+    '''
+    s = l.sorted()
+    five_percent = 0.05 * len(s)
+    return (min(s[int(five_percent):-1]), max(s[0:len(s) - int(five_percent) - 1]))
+
+
+def find_x_percent_extents(x, d):
+    # Try to find appropriate cutoffs to the left and right to avoid
+    # too much flatness in the margins.
+    left95p = 0
+    right95p = 0
+    for name in d.keys():
+        three_prime_extent = d[name]['three_prime_extent']
+        five_prime_extent = map(lambda x: -x, d[name]['five_prime_extent'])
+
+        (a,b) = minmax_of_x_percent_of_list(five_prime_extent)
+        left95p = min(left95p, a)
+        (a,b) = minmax_of_x_percent_of_list(three_prime_extent)
+        right95p = max(right95p, b)
+    return (left95p, right95p)
+
+
+def plot_utrs(prefix, max_extent, d):
+    '''
+    Input: 
        - prefix is for the output filename,
        - d is the dict of dicts with datasets
+
+    Output: A pdf, named using the prefix, of densities of 5' and 3' UTRS lengths.
     '''
     
     plt.clf()
@@ -67,9 +132,10 @@ def plot_utrs(prefix, d):
     for name in d.keys():
         three_prime_extent = d[name]['three_prime_extent']
         five_prime_extent = map(lambda x: -x, d[name]['five_prime_extent'])
+
         x5 = np.array(five_prime_extent)
-        left = min(x5)
         x3 = np.array(three_prime_extent)
+        left = min(x5)
         right= max(x3)
 
         #sns.kdeplot(x5,             cut=1, ax=ax5p)
@@ -77,6 +143,12 @@ def plot_utrs(prefix, d):
         sns.kdeplot(x5,             clip=(left, 0), ax=ax5p)
         sns.kdeplot(x3, label=name, clip=(0, right), ax=ax3p)
 
+    if max_extent:
+        if (max_extent < 1):
+            (left95p, right95p) = find_x_percent_extents(max_extent, d)
+            ax5p.xlims(left95p, right95p)
+        else:
+            ax5p.xlims(-max_extent, max_extent)
 
     ax5p.set_title('Possible UTR extent')
 #    ax5p.xlabel("UTR extent on 5' and 3' end of CDS")  
@@ -85,10 +157,13 @@ def plot_utrs(prefix, d):
     plt.savefig(file_name, transparent=True)
 
 
+#############################################################################################
+
+
 def plot_cdna_coverage(prefix, d):
     '''Input: 
        - prefix is for the output filename,
-       - d is a dictionary containing (somewhere...) coverage is a list of numbers saying how much of cDNA was mapped.
+       - d is a dictionary containing (somewhere...) coverage as a list of numbers saying how much of cDNA was mapped.
     '''
     plt.clf()
     plt.title('cDNA coverage')
@@ -112,6 +187,9 @@ def plot_cdna_coverage(prefix, d):
     file_name = prefix +'_cdna_coverage.pdf' # output file. Suffix decides format
     plt.savefig(file_name, transparent=True)
 
+#############################################################################################
+
+
 
 
 if __name__ == "__main__":
@@ -124,6 +202,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Take one or several JSON files from petimeter and plot the distributions.')
     parser.add_argument('output_prefix')
     parser.add_argument('jsonfiles', nargs='+')
+    parser.add_argument('-e', '--max_extent', action='store', help='Maximal extent of UTRs in plot. Instead of choosing max extent from data, use this number.')
 
     args = parser.parse_args()
 
@@ -146,8 +225,7 @@ if __name__ == "__main__":
         for k in rawdata.keys():
             data[dataset_name][k] = rawdata[k]
 
-
-    plot_utrs(args.output_prefix, data)
+    plot_utrs(args.output_prefix, args.max_extent, data)
     plot_cdna_coverage(args.output_prefix, data)
-
+    plot_bars(args.output_prefix, data)
 
