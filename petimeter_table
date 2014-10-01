@@ -32,7 +32,6 @@ def print_csv(detailed, d, elements):
 
 def print_text(detailed, d, elements):
     longest_name = max(map(len, d.keys()))
-    print longest_name
     prefix = ' ' * (longest_name + 1)
     if detailed: 
         print prefix + "|Completeness|      cDNA coverage       |         5' extent        |         3' extent        |     Genes per contig"
@@ -42,6 +41,9 @@ def print_text(detailed, d, elements):
         print prefix + "| cDNA   CDS | mean  sd |   mean     sd  |   mean     sd  | mean  sd"
 
     for k in d.keys():
+        print k, longest_name
+        print d[k]['completeness']['cDNA']
+        print d[k]['completeness']['CDS']
         stdout.write('{:<{}} |{:>5} {:>5} '.format(k, longest_name, d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
         for e in elements:
             stdout.write('|')
