@@ -95,7 +95,7 @@ def minmax_of_x_percent_of_list(x, l):
     '''
     Return the smallest of the top 95% values and largest of the bottom 95% values.
     '''
-    s = l.sorted()
+    s = sorted(l)
     five_percent = (1-x) * len(s) # Not really 5% any more... Now it is adjustable!
     return (min(s[int(five_percent):-1]), max(s[0:len(s) - int(five_percent) - 1]))
 
