@@ -41,9 +41,6 @@ def print_text(detailed, d, elements):
         print prefix + "| cDNA   CDS | mean  sd |   mean     sd  |   mean     sd  | mean  sd"
 
     for k in d.keys():
-        print k, longest_name
-        print d[k]['completeness']['cDNA']
-        print d[k]['completeness']['CDS']
         stdout.write('{:<{}} |{:>5} {:>5} '.format(k, longest_name, d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
         for e in elements:
             stdout.write('|')
