@@ -3,6 +3,7 @@ import json
 import argparse
 import sys 
 import matplotlib.pyplot as plt
+import functools
 import seaborn as sns
 import numpy as np
 
@@ -164,6 +165,40 @@ def plot_utrs(prefix, max_extent, d):
 
 
 #############################################################################################
+def count_larger_elems(l, threshold):
+    '''
+    How many elements in l are larger than threshold?
+    '''
+    return reduce(lambda count, x: count if x < threshold else count + 1, l, 0)
+
+
+def plot_counts(prefix, d):
+    '''
+    Input: 
+       - prefix is for the output filename,
+       - d is the dict of dicts with datasets
+
+    Output: A pdf showing how gene count is affected by extent threshold (>x% of cDNA covered).
+    '''
+    
+    plt.clf()
+    plt.xlim(0, 1)
+    plt.xlabel('mapped extent (%)')
+
+    x = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    for name in d.keys():
+        coverage = d[name]['cDNA_coverage'].values()
+        count_fcn = functools.partial(count_larger_elems, coverage)
+        y = map(count_fcn, x)
+        plt.plot(x, y, label=name)
+
+    plt.ylim(ymin=0)
+    plt.legend(loc='upper right')
+    file_name = prefix +'_counts.pdf' # output file. Suffix decides format
+    plt.savefig(file_name, transparent=True)
+
+
+#############################################################################################
 
 
 def plot_cdna_coverage(prefix, d):
@@ -178,7 +213,7 @@ def plot_cdna_coverage(prefix, d):
     
     names = d.keys()
     data = map(lambda n: d[n]['cDNA_coverage'].values(), names)
-#    for name in d.keys():
+ #    for name in d.keys():
 #        data[name] = d[name]['cDNA_coverage']
 
         #    plt.violinplot(data) # Only works in matplotlib version 1.4
@@ -234,4 +269,4 @@ if __name__ == "__main__":
     plot_utrs(args.output_prefix, args.max_extent, data)
     plot_cdna_coverage(args.output_prefix, data)
     plot_bars(args.output_prefix, data)
-
+    plot_counts(args.output_prefix, data)
