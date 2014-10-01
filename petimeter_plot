@@ -4,8 +4,8 @@ import argparse
 import sys 
 import matplotlib.pyplot as plt
 import functools
-import seaborn as sns
-import numpy as np
+#import seaborn as sns
+#import numpy as np
 
 
 #[name]['cdna_coverage'])
@@ -182,18 +182,27 @@ def plot_counts(prefix, d):
     '''
     
     plt.clf()
+    f = plt.figure()
+    ax= plt.subplot(111)
     plt.xlim(0, 1)
-    plt.xlabel('mapped extent (%)')
+    plt.xlabel('mapped extent')
 
     x = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     for name in d.keys():
         coverage = d[name]['cDNA_coverage'].values()
         count_fcn = functools.partial(count_larger_elems, coverage)
         y = map(count_fcn, x)
-        plt.plot(x, y, label=name)
+        ax.plot(x, y, label=name)
 
     plt.ylim(ymin=0)
-    plt.legend(loc='upper right')
+    #    plt.legend(loc='upper right')
+
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    ax.legend(bbox_to_anchor=(1, 1))
+
+    ax.grid(color='gray', linestyle='dashed', which='both')
     file_name = prefix +'_counts.pdf' # output file. Suffix decides format
     plt.savefig(file_name, transparent=True)
 
@@ -266,7 +275,7 @@ if __name__ == "__main__":
         for k in rawdata.keys():
             data[dataset_name][k] = rawdata[k]
 
-    plot_utrs(args.output_prefix, args.max_extent, data)
-    plot_cdna_coverage(args.output_prefix, data)
-    plot_bars(args.output_prefix, data)
+#    plot_utrs(args.output_prefix, args.max_extent, data)
+#    plot_cdna_coverage(args.output_prefix, data)
+#    plot_bars(args.output_prefix, data)
     plot_counts(args.output_prefix, data)
