@@ -1,0 +1,80 @@
+#! /usr/bin/env python
+import json
+import argparse
+import sys 
+import matplotlib.pyplot as plt
+
+
+def simpleaxis(ax):
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+
+
+def plot_data(prefix, name1, l1, nam2, l2):
+    fig=plt.figure(facecolor='white')
+    ax = plt.axes()
+    plt.axis([-0.05, 1.05, -0.05, 1.05])
+#    ax.set_frame_on(False)
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    plt.plot(l1, l2, 'k.')
+    plt.xlabel(name1)
+    plt.ylabel(name2)
+    plt.savefig(prefix + ".pdf")
+    
+################################################################################################################    
+def open_details_file(fname):
+    try:
+        h = open(fname)
+        d = json.load(h)
+    except Exception, e:
+        sys.stderr.write("Warning: Could not read JSON data from file '" + fname + "'. Aborting.\n")
+        exit(1)
+
+    dataset_name = d.get('name')
+    if not dataset_name:
+        sys.stderr.write("Warning: file '" + f + "' is probably not output from petimeter: the dataset name (may be filename) is missing. Ignoring and continuing.\n")
+
+    return (dataset_name, d)
+        
+################################################################################################################    
+
+
+if __name__ == "__main__":
+
+    # Requires python 2.7 or later (due to the dictionary comprehensions?)
+    if sys.version_info[0] < 2 or (sys.version_info[0] >= 2 and sys.version_info[1] < 7):
+        print("This script requires Python version 2.7 or later")
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(description='Take two petimeter _details.json files and plot agreement on cDNA mappings.')
+    parser.add_argument('prefix', help="A prefix for the output file.")
+    parser.add_argument('jsonfile1', help="First *_details.json file.")
+    parser.add_argument('jsonfile2', help="Second *_details.json file.")
+
+    args = parser.parse_args()
+
+    # We will collect all data here for plotting
+    (name1, data1) = open_details_file(args.jsonfile1)
+    (name2, data2) = open_details_file(args.jsonfile2)
+
+    if name1 == name2:
+        sys.stderr.write("Error: Both input datasets are named '" + dataset_name + "'. Aborting.\n")
+        exit(3)
+
+    # Extract the dictionaries containing pairs of transcript name and transcript alignment extent ('coverage')
+    a1 = data1['cDNA_coverage']
+    a2 = data2['cDNA_coverage']
+
+    # Get the union of transcript accessions
+    keys = list(a1.viewkeys() | a2.viewkeys())
+
+    l1 = map(lambda k: a1.get(k, 0), keys)
+    l2 = map(lambda k: a2.get(k, 0), keys)
+
+    plot_data(args.prefix, name1, l1, name2, l2)
