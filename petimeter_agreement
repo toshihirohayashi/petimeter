@@ -53,9 +53,14 @@ def gene_unique(d, name1, name2):
     # Extract the dictionaries containing pairs of transcript name and transcript alignment extent ('coverage')
     t1 = d[name1]['cDNA_coverage']
     t2 = d[name2]['cDNA_coverage']
+
+    # Filter away tiny hits, using a dict comprehension:
+    x1 = {acc: cov for (acc, cov) in t1.iteritems() if cov >= cover_threshold}
+    x2 = {acc: cov for (acc, cov) in t2.iteritems() if cov >= cover_threshold}
+
     n = 0
-    for key in t1.keys():
-        if not t2.get(key):
+    for key in x1.keys():
+        if not x2.get(key):
             n += 1
 
     return n
