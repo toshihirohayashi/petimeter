@@ -46,6 +46,20 @@ def restricted_float(x):
     return x
 
 
+def gene_unique(d, name1, name2):
+    '''
+    Count number of genes found in assembly name1, which are not found in name2.
+    '''
+    # Extract the dictionaries containing pairs of transcript name and transcript alignment extent ('coverage')
+    t1 = d[name1]['cDNA_coverage']
+    t2 = d[name2]['cDNA_coverage']
+    n = 0
+    for key in t1.keys():
+        if not t2.get(key):
+            n += 1
+
+    return n
+
 ################################################################################################################    
 
 if __name__ == "__main__":
@@ -57,6 +71,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Take two or several JSON files from petimeter and compute agreement on gene contents.')
     parser.add_argument('-c', '--correlation', action="store_true", help='Output the correlation coefficient for the transcript alignment extent instead of gene count.')
+    parser.add_argument('-u', '--unique', action="store_true", help='Number of genes found in one (row), but not the other (column).')
     parser.add_argument('-t', '--threshold', type=restricted_float, dest='cover_threshold', action='store',  help='Minimum alignment fraction of cDNA on contig. Default is 0.95. Set to 0 to get _every_ trace of a gene matched upp. This option does not affect -c', default=cover_threshold)
     parser.add_argument('jsonfile')
     parser.add_argument('jsonfiles', nargs='+')
@@ -102,6 +117,8 @@ if __name__ == "__main__":
         else:
             print "{:}*{:} ".format(name[0:4],name[len(name)-4:len(name)]),
     print
+
+    # This is twice as slow as necessary. My apologies.
     for i in range(len(name_list)):
         print "{:{}}".format(name_list[i], indentation),
         for j in range(len(name_list)):
@@ -110,6 +127,9 @@ if __name__ == "__main__":
             elif args.correlation:
                 x = gene_correlation(data, name_list[i], name_list[j])
                 print " {:8.3} ".format(x),
+            elif args.unique:
+                x = gene_unique(data, name_list[i], name_list[j])
+                print " {:8} ".format(x),
             else: 
                 x = intersection(data, name_list[i], name_list[j])
                 print " {:8} ".format(x),
