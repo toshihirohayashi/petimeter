@@ -3,7 +3,7 @@ import json
 import argparse
 import sys 
 import matplotlib.pyplot as plt
-
+import random
 
 def simpleaxis(ax):
     ax.spines['top'].set_visible(False)
@@ -53,6 +53,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     parser = argparse.ArgumentParser(description='Take two petimeter _details.json files and plot agreement on cDNA mappings.')
+    parser.add_argument('-j', '--jitter', action='store_true', help='Add some noise to the plotting to emphasize dense regions.')
     parser.add_argument('prefix', help="A prefix for the output file.")
     parser.add_argument('jsonfile1', help="First *_details.json file.")
     parser.add_argument('jsonfile2', help="Second *_details.json file.")
@@ -74,7 +75,13 @@ if __name__ == "__main__":
     # Get the union of transcript accessions
     keys = list(a1.viewkeys() | a2.viewkeys())
 
-    l1 = map(lambda k: a1.get(k, 0), keys)
-    l2 = map(lambda k: a2.get(k, 0), keys)
+    if args.jitter:
+        l1 = map(lambda k: random.gauss(0,0.002) + a1.get(k, 0), keys)
+        l2 = map(lambda k: random.gauss(0,0.002) + a2.get(k, 0), keys)
+    else:
+        l1 = map(lambda k: a1.get(k, 0), keys)
+        l2 = map(lambda k: a2.get(k, 0), keys)
 
+
+    
     plot_data(args.prefix, name1, l1, name2, l2)
