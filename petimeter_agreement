@@ -110,8 +110,15 @@ if __name__ == "__main__":
         for k in rawdata.keys():
             data[dataset_name][k] = rawdata[k]
 
+    if args.unique:
+        print "Unique genes. In row i, col j: number of genes in assembly i not found in assembly j."
+    elif args.correlation:
+        print "Correlation of cDNA mapping extents."
+    else:
+        print "Number of shared genes."
+        
     if not args.correlation:
-        print "Demanding ", str(100*cover_threshold), "% of cDNA mapped:"
+        print "Requiring ", str(100*cover_threshold), "% of cDNA mapped:"
 
 
     indentation = max(map(len, name_list))
