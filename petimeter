@@ -18,6 +18,8 @@ verbose = True
 # Constants
 min_coverage_for_complete_gene = 0.95 # Require that 95% of the cDNA is matching the genomic region to be called complete
 utr_overhang_for_complete_cds = 3     # For claiming "CDS complete", we require that there are this many nt from a UTR also matching.
+assessment_format_version = 1.0       # Noting that this is version 1.0 of the format. Future-proofing! Put in the output file.
+details_format_version = 1.0          # Noting that this is version 1.0 of the format. Future-proofing! Put in the output file.
 
 def collectResults(stats, genesPerContig):
     ''' 
@@ -171,7 +173,7 @@ if __name__ == "__main__":
     parser.add_argument('gff_file', help='Result of mapping the cDNA to the assembly, in GFF format. There are no intentional requirements on which tool for producing this file, but we have only tested with GMAP.')
     parser.add_argument('-q', '--quiet', action='store_true', help='Do not show progress messages')
     parser.add_argument('-n', '--name', help='Give the test a name. This is useful when later combining several tests together, for example for plotting, when this name is used in the legend. If no name is given, the base name of the assembly file is used.')
-    parser.add_argument('-c', '--complete_threshold', action='store', default=min_coverage_for_complete_gene, help='This is how much of a cDNA should align to the assembly to be counted as complete. Default: ' + str(min_coverage_for_complete_gene))
+    parser.add_argument('-c', '--complete_threshold', action='store', default=min_coverage_for_complete_gene, help='This is how much of a cDNA or CDS should align to the assembly to be counted as complete. Default: ' + str(min_coverage_for_complete_gene))
 
     args = parser.parse_args()
 
@@ -193,6 +195,7 @@ if __name__ == "__main__":
         inputdata['name'] = args.name
     else:
         inputdata['name'] = os.path.basename(args.assembly_file)
+    inputdata['complete_threshold'] = min_coverage_for_complete_gene
 
     # Store cDNA length in another dict
     cdnaLengths = dict()
@@ -266,6 +269,9 @@ if __name__ == "__main__":
     (results, plotdata) = collectResults(stats, genesPerContig)
     results['input'] = inputdata
     plotdata['name'] = inputdata['name']
+
+    results['assessment_format'] = assessment_format_version # To enable file verification and future format changes
+    plotdata['details_format'] = details_format_version      # To enable file verification and future format changes
     json.dump(results, oh, indent=2)
     json.dump(plotdata, ph, indent=2)
 
