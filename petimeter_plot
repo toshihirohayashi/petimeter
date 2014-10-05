@@ -147,7 +147,7 @@ def plot_utrs(prefix, max_extent, d):
 
     percentile = 0.95
     if max_extent:
-        if (max_extent < 1):
+        if (float(max_extent) < 1):
             percentile = float(max_extent)
         else:
             ax5p.set_xlim(-int(max_extent), 0)
