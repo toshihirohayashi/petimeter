@@ -27,12 +27,12 @@ def open_details_file(fname):
 
 def powerset(iterable):
     '''
-    Almost a powerset! The empty set and the complete set is avoided. 
-    powerset([1,2,3]) --> (1,) (2,) (3,) (1,2) (1,3) (2,3)
+    Almost a powerset! The empty set is avoided. 
+    powerset([1,2,3]) --> (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)
     '''
 
     s = list(iterable)
-    return chain.from_iterable(combinations(s, r) for r in range(1,len(s)))
+    return chain.from_iterable(combinations(s, r) for r in range(1,len(s)+1))
 
 
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         print("This script requires Python version 2.7 or later")
         sys.exit(1)
 
-    parser = argparse.ArgumentParser(description='Take two or several JSON files from petimeter and compute venn diagram information.')
+    parser = argparse.ArgumentParser(description='Take two or several JSON files from petimeter and compute Venn diagram information.')
     parser.add_argument('-t', '--threshold', type=restricted_float, dest='cover_threshold', action='store',  help='Minimum alignment fraction of cDNA on contig. Default is 0.95. Set to 0 to get _every_ trace of a gene matched upp.', default=cover_threshold)
     parser.add_argument('-y', '--yes_i_know_what_i_am_doing', help="Time and space complexity grows a lot with the number of input files. Issue this flag to indicate that you understand this.")
     parser.add_argument('jsonfile')
@@ -119,7 +119,9 @@ if __name__ == "__main__":
 
     print "Requiring", str(100*cover_threshold), "% of cDNA mapped."
     print "Assemblies: ", ", ".join(name_list)
-    print " Count\tAssembly set"
+    print "The gene set is formed as the intersection of the named assemblies."
+    print "The count is the number of genes in the intersection disjoint from the other gene sets."
+    print " Count  Gene set"
 
     nameset = frozenset(name_list)
     size = 1                    # Used to detect when combination size changes
