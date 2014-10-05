@@ -117,9 +117,9 @@ if __name__ == "__main__":
         sys.stderr.write('You have ' + str(len(name_list)) + ' input files. That might use a lot of resources. Use\nthe -y flag to indicate that you are aware of this!\n')
         exit(4)
 
-    print "Requiring ", str(100*cover_threshold), "% of cDNA mapped."
+    print "Requiring", str(100*cover_threshold), "% of cDNA mapped."
     print "Assemblies: ", ", ".join(name_list)
-    print "Assembly set\t\tUnique gene intersection"
+    print " Count\tAssembly set"
 
     nameset = frozenset(name_list)
     for s in powerset(name_list): # Iterate over all "non-trivial" combinations of assemblies
@@ -130,5 +130,5 @@ if __name__ == "__main__":
         union_of_complement_genes = reduce(lambda acc, s: acc.union(geneset[s]), complement, frozenset([]))
         
         difference = union_of_chosen_genes - union_of_complement_genes
-        print ", ".join(list(chosen)), "\t\t", len(difference) #, "\t", difference
+        print "{:6}\t{}".format(len(difference), ", ".join(list(chosen)))  #, "\t", difference
 
