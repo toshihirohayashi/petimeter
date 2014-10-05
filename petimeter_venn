@@ -1,0 +1,133 @@
+#! /usr/bin/env python
+import json
+import argparse
+import sys 
+from itertools import *
+
+cover_threshold=0.95     # How well should the cDNA have been matched to the assembly? This matches 'min_coverage_for_complete_gene' in petimeter.
+large_dataset=10          # Require the --yes-i-know-what-i-am-doing flag from user if more input files than this
+
+################################################################################################################    
+def open_details_file(fname):
+    try:
+        h = open(fname)
+        d = json.load(h)
+    except Exception, e:
+        sys.stderr.write("Warning: Could not read JSON data from file '" + fname + "'. Aborting.\n")
+        exit(1)
+
+    dataset_name = d.get('name')
+    if not dataset_name:
+        sys.stderr.write("Warning: file '" + f + "' is probably not output from petimeter: the dataset name (may be filename) is missing. Ignoring and continuing.\n")
+
+    return (dataset_name, d)
+        
+################################################################################################################    
+
+
+def powerset(iterable):
+    '''
+    Almost a powerset! The empty set and the complete set is avoided. 
+    powerset([1,2,3]) --> (1,) (2,) (3,) (1,2) (1,3) (2,3)
+    '''
+
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(1,len(s)))
+
+
+
+def intersection(d, name1, name2):
+    '''
+    Compute how many genes assemblies 1 and 2 share.
+    '''
+
+    # Extract the dictionaries containing pairs of transcript name and transcript alignment extent ('coverage')
+    t1 = d[name1]['cDNA_coverage']
+    t2 = d[name2]['cDNA_coverage']
+
+    # Filter away tiny hits, using a dict comprehension:
+    x1 = {acc: cov for (acc, cov) in t1.iteritems() if cov >= cover_threshold}
+    x2 = {acc: cov for (acc, cov) in t2.iteritems() if cov >= cover_threshold}
+
+    # Extract transcipt names as a set
+    s1 = set(x1.keys())
+    return len(s1.intersection(x2.keys()))
+
+
+    
+
+def restricted_float(x):
+    x = float(x)
+    if x <= 0.0 or x > 1.0:
+        raise argparse.ArgumentTypeError("%r not in range (0.0, 1.0]"%(x,))
+    return x
+
+
+def gene_unique(d, name1, name2):
+    '''
+    Count number of genes found in assembly name1, which are not found in name2.
+    '''
+    # Extract the dictionaries containing pairs of transcript name and transcript alignment extent ('coverage')
+    t1 = d[name1]['cDNA_coverage']
+    t2 = d[name2]['cDNA_coverage']
+
+    # Filter away tiny hits, using a dict comprehension:
+    x1 = {acc: cov for (acc, cov) in t1.iteritems() if cov >= cover_threshold}
+    x2 = {acc: cov for (acc, cov) in t2.iteritems() if cov >= cover_threshold}
+
+    n = 0
+    for key in x1.keys():
+        if not x2.get(key):
+            n += 1
+
+    return n
+
+################################################################################################################    
+
+if __name__ == "__main__":
+
+    # Requires python 2.7 or later (due to the dictionary comprehensions?)
+    if sys.version_info[0] < 2 or (sys.version_info[0] >= 2 and sys.version_info[1] < 7):
+        print("This script requires Python version 2.7 or later")
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(description='Take two or several JSON files from petimeter and compute venn diagram information.')
+    parser.add_argument('-t', '--threshold', type=restricted_float, dest='cover_threshold', action='store',  help='Minimum alignment fraction of cDNA on contig. Default is 0.95. Set to 0 to get _every_ trace of a gene matched upp.', default=cover_threshold)
+    parser.add_argument('-y', '--yes_i_know_what_i_am_doing', help="Time and space complexity grows a lot with the number of input files. Issue this flag to indicate that you understand this.")
+    parser.add_argument('jsonfile')
+    parser.add_argument('jsonfiles', nargs='+')
+
+    args = parser.parse_args()
+    cover_threshold = float(args.cover_threshold)
+
+    geneset={}                     # We will collect all data here for plotting
+    name_list=[]                # To preserve the order of the input
+    for f in [args.jsonfile] + args.jsonfiles:
+        (name, d) = open_details_file(f)
+        if name in name_list:
+            sys.stderr.write("Error: There are two assemblies named '" + dataset_name + "' in the input. Aborting.\n")
+            exit(3)
+        else:
+            name_list.append(name)
+
+        genedict = d['cDNA_coverage']
+        geneset[name] = frozenset(filter(lambda x: genedict[x] >= cover_threshold, genedict.keys()))
+
+    if len(name_list) > large_dataset and not args.yes_i_know_what_i_am_doing:
+        sys.stderr.write('You have ' + str(len(name_list)) + ' input files. That might use a lot of resources. Use\nthe -y flag to indicate that you are aware of this!')
+        exit(4)
+
+    print "Requiring ", str(100*cover_threshold), "% of cDNA mapped"
+    print "Gene set\t\tUnique intersection"
+
+    nameset = frozenset(name_list)
+    for s in powerset(name_list): # Iterate over all "non-trivial" combinations of assemblies
+        chosen = frozenset(s)
+        union_of_chosen_genes = reduce(lambda acc, s: acc.intersection(geneset[s]), s[2:], frozenset(geneset[s[0]])) # Combine the chosen gene sets
+        # Now look get genes found in all other assemblies
+        complement = nameset - chosen
+        union_of_complement_genes = reduce(lambda acc, s: acc.union(geneset[s]), complement, frozenset([]))
+        
+        difference = union_of_chosen_genes - union_of_complement_genes
+        print ", ".join(list(chosen)), "\t\t", len(difference) #, "\t", difference
+
