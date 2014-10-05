@@ -38,13 +38,14 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Take a petimeter details file (in JSON format) and output the list of genes the assembly contains.')
     parser.add_argument('-t', '--threshold', type=restricted_float, dest='cover_threshold', action='store',  help='Minimum alignment fraction of cDNA on contig. Default is 0.95. Set to 0 to get _every_ trace of a gene matched upp.', default=cover_threshold)
-    parser.add_argument('jsonfile')
+    parser.add_argument('jsonfiles', nargs='+')
 
     args = parser.parse_args()
     cover_threshold = float(args.cover_threshold)
 
-    (name, d) = open_details_file(args.jsonfile)
-    for g in d['cDNA_coverage'].keys():
-        if d['cDNA_coverage'][g] >= cover_threshold:
-            print g
+    for f in args.jsonfiles:
+        (name, d) = open_details_file(f)
+        for g in d['cDNA_coverage'].keys():
+            if d['cDNA_coverage'][g] >= cover_threshold:
+                print g
 
