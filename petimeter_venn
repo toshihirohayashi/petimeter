@@ -136,7 +136,7 @@ if __name__ == "__main__":
         if len(chosen) > size:
             size += 1
             print
-        print "{:6}\t{}".format(len(difference), ", ".join(s))  , "\t", difference
+        print "{:6}\t{}".format(len(difference), ", ".join(s)) # , "\t", difference
 
 
 
