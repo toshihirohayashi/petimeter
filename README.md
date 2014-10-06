@@ -4,7 +4,7 @@ The idea is to take full length cDNA from a closely related species
 and count how many of them are found in the assembly. This can be done
 easily, but Petimeter also helps with gathering statistics on
 predicted UTRs and distance from (projected) gene to contig/scaffold
-edges.
+edges, see Program List below.
 
 The main output file is humanly readable, but it can also be used by
 the auxiliary petimeter_table to reformat into a tabular format (TXT, CSV, HTML,
@@ -12,13 +12,43 @@ LaTeX). Simple plots are created by petimeter_plot. Both these
 tools can take petimeter output from several competing assemblies to
 enable comparative presentations.
 
-## Input
+## Program List
+
+- **petimeter**: Collect information from assembly, cDNA sequences,
+and cDNA-to-assembly mapping. See below for more details.
+
+- **petimeter_table**: Give a consise summary of one or several *assessment* files from
+petimeter.
+
+- **petimeter_plot**: Take one or several *details* files and
+  visualise results in some plots.
+
+- **petimeter_compare**: Take two *details* files and make a scatter
+  plot of the agreement.
+
+- **petimeter_agreement**: Take  two or more
+  *details* files and output a matrix of agreement. The agreement can
+  be measured as number of shared genes, the correlation between
+  mapping extents, or (somewhat contradictory) the number of unique
+  genes an assembly has in comparison to others.
+
+- **petimeter_venn**: Use two or more *details* files and compute Venn
+  diagram information. No graphics is produced, but you get all the
+  numbers you need for drawing it yourself.
+
+- **petimeter_genes**: Output the cDNA accessions passing the
+  threshold (adjustable) to be classified as "full gene", from one or
+  more *details* files.
+
+## Petimeter
+
+### Input
 - A prefix for output file names
 - Assembly file in Fasta format
 - cDNA file in Fasta format
 - A GFF file 
 
-## Output
+### Output
 - A general assessment file 
 - A "details" file with quantitative data for plotting etc.
 
