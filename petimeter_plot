@@ -192,7 +192,7 @@ def plot_counts(prefix, d):
     lines = ["-","--","-.",":"]
     linecycler = cycle(lines)
 
-    x = [0.05 + 0.05 * x for x in range(1, 19)]
+    x = [0.05 + 0.05 * x for x in range(0, 19)]
     for name in d.keys():
         coverage = d[name]['cDNA_coverage'].values()
         count_fcn = functools.partial(count_larger_elems, coverage)
