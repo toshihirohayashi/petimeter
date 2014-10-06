@@ -223,7 +223,7 @@ def plot_counts(prefix, d, order):
 #############################################################################################
 
 
-def plot_cdna_coverage(prefix, d):
+def plot_cdna_coverage(prefix, d, order):
     '''Input: 
        - prefix is for the output filename,
        - d is a dictionary containing (somewhere...) coverage as a list of numbers saying how much of cDNA was mapped.
