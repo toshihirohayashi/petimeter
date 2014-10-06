@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import functools
 import seaborn as sns
 import numpy as np
-
+from itertools import cycle
 
 #[name]['cdna_coverage'])
 #, data[name]['five_prime_extent'], data[name]['three_prime_extent'])
@@ -189,12 +189,15 @@ def plot_counts(prefix, d):
     plt.xlim(0, 1)
     plt.xlabel('mapped extent')
 
+    lines = ["-","--","-.",":"]
+    linecycler = cycle(lines)
+
     x = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     for name in d.keys():
         coverage = d[name]['cDNA_coverage'].values()
         count_fcn = functools.partial(count_larger_elems, coverage)
         y = map(count_fcn, x)
-        ax.plot(x, y, label=name)
+        ax.plot(x, y, next(linecycler), label=name)
 
     plt.ylim(ymin=0)
     #    plt.legend(loc='upper right')
