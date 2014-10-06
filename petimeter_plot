@@ -48,7 +48,7 @@ def autolabel(a, rects, labels):
         a.text(w-200, rect.get_y()+rect.get_height()/2, '%d'%int(w), ha='right', va='center', zorder=20)
 
 
-def plot_bars(prefix, d):
+def plot_bars(prefix, d, order):
     '''Input: 
        - prefix is for the output filename,
        - d is the dict of dicts with datasets
@@ -56,7 +56,7 @@ def plot_bars(prefix, d):
     plt.clf()
 
     width = 0.3
-    labels = d.keys()    
+    labels = order # d.keys()    
     y = np.arange(0.5, len(labels)/2.0+0.5, 0.5)
     
     counts = map(lambda n: count_complete_etc(d[n]['cDNA_coverage'].values()), labels)
@@ -117,7 +117,7 @@ def find_x_percent_extents(x, d):
     return (left95p, right95p)
 
 
-def plot_utrs(prefix, max_extent, d):
+def plot_utrs(prefix, max_extent, d, order):
     '''
     Input: 
        - prefix is for the output filename,
@@ -131,7 +131,7 @@ def plot_utrs(prefix, max_extent, d):
     ax5p.locator_params(nbins=4)
     ax3p.locator_params(nbins=4)
   
-    for name in d.keys():
+    for name in order: # d.keys():
         three_prime_extent = d[name]['three_prime_extent']
         five_prime_extent = map(lambda x: -x, d[name]['five_prime_extent'])
 
@@ -174,7 +174,7 @@ def count_larger_elems(l, threshold):
     return reduce(lambda count, x: count if x < threshold else count + 1, l, 0)
 
 
-def plot_counts(prefix, d):
+def plot_counts(prefix, d, order):
     '''
     Input: 
        - prefix is for the output filename,
@@ -193,7 +193,7 @@ def plot_counts(prefix, d):
     linecycler = cycle(lines)
 
     x = [0.05 + 0.05 * x for x in range(0, 19)]
-    for name in d.keys():
+    for name in order: # d.keys():
         coverage = d[name]['cDNA_coverage'].values()
         count_fcn = functools.partial(count_larger_elems, coverage)
         y = map(count_fcn, x)
@@ -229,7 +229,7 @@ def plot_cdna_coverage(prefix, d):
     plt.xlabel("")
 #    plt.xlim(0,1)
     
-    names = d.keys()
+    names = order
     data = map(lambda n: d[n]['cDNA_coverage'].values(), names)
  #    for name in d.keys():
 #        data[name] = d[name]['cDNA_coverage']
@@ -267,6 +267,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data={}                     # We will collect all data here for plotting
+    name_list=[]
     for f in args.jsonfiles:
         try:
             j_file = open(f)
@@ -275,6 +276,7 @@ if __name__ == "__main__":
             sys.stderr.write("Warning: Could not read JSON data from file '" + f + "'. Ignoring and continuing.\n")
 
         dataset_name = rawdata.get('name')
+        name_list.append(dataset_name)
         if dataset_name:
             del rawdata['name'] # 'name' is meta data, the rest /should/ be data for plotting
         else:
@@ -285,7 +287,7 @@ if __name__ == "__main__":
         for k in rawdata.keys():
             data[dataset_name][k] = rawdata[k]
 
-    plot_counts(args.output_prefix, data)
-    plot_utrs(args.output_prefix, args.max_extent, data)
-    plot_cdna_coverage(args.output_prefix, data)
-    plot_bars(args.output_prefix, data)
+    plot_counts(args.output_prefix, data, name_list)
+    plot_utrs(args.output_prefix, args.max_extent, data, name_list)
+    plot_cdna_coverage(args.output_prefix, data, name_list)
+    plot_bars(args.output_prefix, data, name_list)
