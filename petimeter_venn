@@ -127,16 +127,18 @@ if __name__ == "__main__":
     size = 1                    # Used to detect when combination size changes
     for s in powerset(name_list): # Iterate over all "non-trivial" combinations of assemblies
         chosen = frozenset(s)
-        union_of_chosen_genes = reduce(lambda acc, s: acc.intersection(geneset[s]), s[2:], frozenset(geneset[s[0]])) # Combine the chosen gene sets
+        intersection_of_chosen_genes = reduce(lambda acc, s: acc.intersection(geneset[s]), s[2:], frozenset(geneset[s[0]])) # Combine the chosen gene sets
         # Now look get genes found in all other assemblies
         complement = nameset - chosen
         union_of_complement_genes = reduce(lambda acc, s: acc.union(geneset[s]), complement, frozenset([]))
         
-        difference = union_of_chosen_genes - union_of_complement_genes
+        difference = intersection_of_chosen_genes - union_of_complement_genes
         if len(chosen) > size:
             size += 1
             print
         print "{:6}\t{}".format(len(difference), ", ".join(s)) # , "\t", difference
 
-
+    sum = 0                     # Add up all the counts we find: will be the size of the union of gene sets
+    union = reduce(lambda acc, s: acc.union(geneset[s]), nameset, frozenset([]))
+    print "\n{:6} in the union of the gene sets".format(len(union))
 
