@@ -149,6 +149,9 @@ def plot_utrs(prefix, max_extent, d, order):
     if max_extent:
         if (float(max_extent) < 1):
             percentile = float(max_extent)
+            (left_percentile, right_percentile) = find_x_percent_extents(percentile, d)
+            ax5p.set_xlim(left_percentile, 0)
+            ax3p.set_xlim(0, right_percentile)
         else:
             ax5p.set_xlim(-int(max_extent), 0)
             ax3p.set_xlim(0, int(max_extent))
@@ -189,7 +192,8 @@ def plot_counts(prefix, d, order):
     plt.xlim(0, 1)
     plt.xlabel('mapped extent')
 
-    lines = ["-","--","-.",":"]
+    # Ensure each drawn line is uniqe, combining 6 colors and 4 line types -> handling up to 24 input files properly.
+    lines = ["-","-","-","-","-","-","--","--","--","--","--","--","-.","-.","-.","-.","-.","-.",":",":",":",":",":",":"]
     linecycler = cycle(lines)
 
     x = [0.05 + 0.05 * x for x in range(0, 19)]
