@@ -40,6 +40,9 @@ petimeter.
   threshold (adjustable) to be classified as "full gene", from one or
   more *details* files.
 
+All programs have proper command-line parsing, so use the flag '-h' to
+get basic usage-information.
+
 ## Petimeter
 
 ### Input
