@@ -144,7 +144,7 @@ def plot_utrs(prefix, max_extent, d, order):
         left = min(x5)
         right= max(x3)
 
-        ls = next(linestyle)
+        ls = next(linecycler)
 
         #sns.kdeplot(x5,             cut=1, ax=ax5p)
         #sns.kdeplot(x3, label=name, cut=1, ax=ax3p)
