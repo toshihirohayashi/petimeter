@@ -107,8 +107,8 @@ def find_x_percent_extents(x, d):
     left95p = 0
     right95p = 0
     for name in d.keys():
-        three_prime_extent = d[name]['three_prime_extent']
-        five_prime_extent = map(lambda x: -x, d[name]['five_prime_extent'])
+        three_prime_extent = map(lambda x: x[1], d[name]['three_prime_extent'])
+        five_prime_extent = map(lambda x: -x[1], d[name]['five_prime_extent'])
 
         (a,b) = minmax_of_x_percent_of_list(x, five_prime_extent)
         left95p = min(left95p, a)
@@ -136,8 +136,8 @@ def plot_utrs(prefix, max_extent, d, order):
     linecycler = cycle(lines)
   
     for name in order: # d.keys():
-        three_prime_extent = d[name]['three_prime_extent']
-        five_prime_extent = map(lambda x: -x, d[name]['five_prime_extent'])
+        three_prime_extent = map(lambda x: x[1], d[name]['three_prime_extent'])
+        five_prime_extent = map(lambda x: -x[1], d[name]['five_prime_extent'])
 
         x5 = np.array(five_prime_extent)
         x3 = np.array(three_prime_extent)
@@ -151,7 +151,7 @@ def plot_utrs(prefix, max_extent, d, order):
         sns.kdeplot(x5,             clip=(left, 0), ax=ax5p, linestyle=ls)
         sns.kdeplot(x3, label=name, clip=(0, right), ax=ax3p, linestyle=ls)
 
-    percentile = 0.95
+    percentile = 0.75
     if max_extent:
         if (float(max_extent) < 1):
             percentile = float(max_extent)
