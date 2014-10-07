@@ -18,8 +18,8 @@ verbose = True
 # Constants
 min_coverage_for_complete_gene = 0.95 # Require that 95% of the cDNA is matching the genomic region to be called complete
 utr_overhang_for_complete_cds = 3     # For claiming "CDS complete", we require that there are this many nt from a UTR also matching.
-assessment_format_version = 1.0       # Noting that this is version 1.0 of the format. Future-proofing! Put in the output file.
-details_format_version = 1.0          # Noting that this is version 1.0 of the format. Future-proofing! Put in the output file.
+assessment_format_version = "1.0"       # Noting that this is version 1.0 of the format. Future-proofing! Put in the output file.
+details_format_version = "1.0"          # Noting that this is version 1.0 of the format. Future-proofing! Put in the output file.
 
 def collectResults(stats, genesPerContig):
     ''' 
@@ -28,29 +28,30 @@ def collectResults(stats, genesPerContig):
     Out: Two  dictionaries. One dictionary with summary statistics, suitable 
         for output in JSON format, one dictionary with data for plotting.
     '''
-    plotdata = {}
+    details = {}
     results = {}
     results['genes_per_contig'] = descriptives(genesPerContig.values())
     results['genes_per_contig']['max_contig'] = max(genesPerContig.iterkeys(), key=(lambda key: genesPerContig[key]))
 
+    transcriptnames = map(lambda s: s['transcript'], stats)
+
     fivePrimeExtents = map(lambda s: s['5prime_extent'], stats)
-    plotdata['five_prime_extent'] = fivePrimeExtents
+    details['five_prime_extent'] = dict(zip(transcriptnames, fivePrimeExtents))
     results['five_prime_extent'] = descriptives(fivePrimeExtents)
 
     threePrimeExtents = map(lambda s: s['3prime_extent'], stats)
-    plotdata['three_prime_extent'] = threePrimeExtents
+    details['three_prime_extent'] = dict(zip(transcriptnames, threePrimeExtents))
     results['three_prime_extent'] = descriptives(threePrimeExtents)
 
-    cDNACoverage = map(lambda s: s['covered'][1], stats)
-    transcriptnames = map(lambda s: s['transcript'], stats)
-    plotdata['cDNA_coverage'] = dict(zip(transcriptnames, cDNACoverage))
+    cDNACoverage = map(lambda s: s['covered'], stats)
+    details['cDNA_coverage'] = dict(zip(transcriptnames, cDNACoverage))
     results['cDNA_coverage'] = descriptives(cDNACoverage)
 
     results['completeness'] = {}
-    results['completeness']['cDNA'] = len(filter(lambda x: x['covered'][1] > min_coverage_for_complete_gene, stats))
+    results['completeness']['cDNA'] = len(filter(lambda x: x['covered'] > min_coverage_for_complete_gene, stats))
     results['completeness']['CDS'] = len(filter(lambda x: x['cds_complete'], stats))
 
-    return (results, plotdata)
+    return (results, details)
 
 
 def descriptives(l):
@@ -87,7 +88,7 @@ def getStats(db, gene):
     stats['transcript'] = geneName
     stats['5prime_extent'] = gene.start - 1
     stats['3prime_extent'] = contigLength - gene.end + 1
-    stats['covered'] = (geneName, min(cdnaLength, gene.end - gene.start + 1) / float(cdnaLength)) # Cannot be > 100%
+    stats['covered'] = min(cdnaLength, gene.end - gene.start + 1) / float(cdnaLength) # Cannot be > 100%
 
     # More work: Are we getting the whole CDS? We assume that the cDNA
     # we work with contains both 5' and 3' UTR. Therefore, if we have
@@ -151,12 +152,12 @@ def output_files(prefix):
 
     try:
         oh = open(main_output_file, "w")
-        ph = open(plotting_output_file, "w")
+        dh = open(plotting_output_file, "w")
     except: 
         stderr.write("Could not open output file ('" + main_output_file + "' and/or '" + plotting_output_file + "') for writing. Aborting.")
         exit(3)
 
-    return (oh, ph)
+    return (oh, dh)
 
 ############################################################################################################
 if __name__ == "__main__":
@@ -185,7 +186,7 @@ if __name__ == "__main__":
 
     # Try to create the output files already here so that we know we can save everything
     # Files: standard assessment, plotting data, and transcript hit list
-    (oh, ph) = output_files(args.prefix)
+    (oh, dh) = output_files(args.prefix)
 
     inputdata={}
     inputdata['assembly_file'] = args.assembly_file
@@ -266,17 +267,17 @@ if __name__ == "__main__":
         stats.append(getStats(db, gene))
         genesPerContig[gene.seqid] += 1
 
-    (results, plotdata) = collectResults(stats, genesPerContig)
+    (results, details) = collectResults(stats, genesPerContig)
     results['input'] = inputdata
-    plotdata['name'] = inputdata['name']
+    details['name'] = inputdata['name']
 
     results['assessment_format'] = assessment_format_version # To enable file verification and future format changes
-    plotdata['details_format'] = details_format_version      # To enable file verification and future format changes
+    details['details_format'] = details_format_version      # To enable file verification and future format changes
     json.dump(results, oh, indent=2)
-    json.dump(plotdata, ph, indent=2)
+    json.dump(details, dh, indent=2)
 
     oh.close()
-    ph.close()
+    dh.close()
 
 
     
