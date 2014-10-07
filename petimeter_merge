@@ -1,0 +1,89 @@
+#! /usr/bin/env python
+import json
+import argparse
+import sys 
+
+################################################################################################################    
+def open_details_file(fname):
+    try:
+        h = open(fname)
+        d = json.load(h)
+        h.close()
+    except Exception, e:
+        sys.stderr.write("Warning: Could not read JSON data from file '" + fname + "'. Aborting.\n")
+        exit(1)
+
+    format_version = d.get('details_format')
+    if not format_version:
+        sys.stderr.write("Error: file '" + f + "' is not output from petimeter.\n")
+        exit(2)
+    elif format_version != "1.0":
+        sys.stderr.write("Error: this version of petimeter cannot read a details file of version '" + format_version + "'.\n")
+        exit(4)
+
+    dataset_name = d.get('name')
+    if not dataset_name:
+        raise IOError('Cannot find dataset name')
+    
+    return (dataset_name, d)
+
+#############################################################################################
+
+def merge(d, d2):
+    '''
+    Put the merger of d and d2 into d. Merging is done by taking the best alternativ in
+    each conflict.
+    '''
+    for k in d.keys():
+        if k == 'name' or k == 'details_format':
+            continue
+        else:
+            d[k] = merge_dicts(d[k], d2[k])
+        
+    return d
+
+def merge_dicts(d1, d2):
+    for k in d2.keys():
+        val = d1.get(k)
+        if (not val) or val < d2[k]:
+            d1[k] = d2[k]
+        # else the d1 value is good.
+
+    return d1        
+                
+
+#############################################################################################
+
+
+if __name__ == "__main__":
+
+    # Requires python 2.7 or later (due to the dictionary comprehensions?)
+    if sys.version_info[0] < 2 or (sys.version_info[0] >= 2 and sys.version_info[1] < 7):
+        sys.stderr.write("This script requires Python version 2.7 or later.\n")
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(description='Take one or several petimeter details files (in JSON format) and output the merged details to stdout, as if we can take the best of the input.')
+    parser.add_argument('jsonfile')
+    parser.add_argument('jsonfiles', nargs='+')
+    args = parser.parse_args()
+
+    name_list=[]                # To preserve the order of the input
+    detailsdict={}
+    for f in [args.jsonfile] + args.jsonfiles:
+        (name, d) = open_details_file(f)
+        if name in name_list:
+            sys.stderr.write("Error: There are two assemblies named '" + dataset_name + "' in the input. Aborting.\n")
+            exit(3)
+        else:
+            name_list.append(name)
+            detailsdict[name]=d
+
+    newname = 'merge(' + ', '.join(name_list) + ')'
+    details=detailsdict[name_list.pop()]
+    for a in name_list:
+        merge(details, detailsdict[a])
+
+    details['name'] = newname
+    print json.dumps(details, indent=4)
+    
+        
