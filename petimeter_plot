@@ -245,7 +245,7 @@ def plot_cdna_coverage(prefix, d, order):
 
         #    plt.violinplot(data) # Only works in matplotlib version 1.4
     plt.boxplot(data, notch=True)
-    plt.xticks(range(len(order)), order)
+    plt.xticks(range(len(order)), [" "] ++ order)
 
 #        x = np.array(d[name]['cDNA_coverage'])
 #        sns.kdeplot(x, label=name)
