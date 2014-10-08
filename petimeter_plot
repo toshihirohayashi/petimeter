@@ -239,13 +239,12 @@ def plot_cdna_coverage(prefix, d, order):
     plt.xlabel("")
 #    plt.xlim(0,1)
     
-    names = order
-    data = map(lambda n: d[n]['cDNA_coverage'].values(), names)
+    data = map(lambda n: d[n]['cDNA_coverage'].values(), order)
  #    for name in d.keys():
 #        data[name] = d[name]['cDNA_coverage']
 
         #    plt.violinplot(data) # Only works in matplotlib version 1.4
-    plt.boxplot(data)
+    plt.boxplot(data, notch=True, labels=order)
 
 
 #        x = np.array(d[name]['cDNA_coverage'])
