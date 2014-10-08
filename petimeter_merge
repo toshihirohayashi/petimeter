@@ -65,7 +65,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Take one or several petimeter details files (in JSON format) and output the merged details to stdout, as if we can take the best of the input.')
     parser.add_argument('jsonfile')
     parser.add_argument('jsonfiles', nargs='+')
-    parser.add_argument('-n', '--name', help='Give the merged data a name. This is useful when later combining several tests together, for example for plotting, when this name is used in the legend. If no name is given, a constructed name of the form "merge(IN1, IN2, ...)" is used. Note: output is still written to stdout.'
+    parser.add_argument('-n', '--name', help='Give the merged data a name. This is useful when later combining several tests together, for example for plotting, when this name is used in the legend. If no name is given, a constructed name of the form "merge(IN1, IN2, ...)" is used. Note: output is still written to stdout.')
     args = parser.parse_args()
 
     name_list=[]                # To preserve the order of the input
