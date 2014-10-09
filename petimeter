@@ -174,7 +174,7 @@ if __name__ == "__main__":
     parser.add_argument('gff_file', help='Result of mapping the cDNA to the assembly, in GFF format. There are no intentional requirements on which tool for producing this file, but we have only tested with GMAP.')
     parser.add_argument('-q', '--quiet', action='store_true', help='Do not show progress messages')
     parser.add_argument('-n', '--name', help='Give the test a name. This is useful when later combining several tests together, for example for plotting, when this name is used in the legend. If no name is given, the base name of the assembly file is used.')
-    parser.add_argument('-c', '--complete_threshold', action='store', default=min_coverage_for_complete_gene, help='This is how much of a cDNA or CDS should align to the assembly to be counted as complete. Default: ' + str(min_coverage_for_complete_gene))
+    parser.add_argument('-t', '--complete_threshold', action='store', default=min_coverage_for_complete_gene, help='This is how much of a cDNA or CDS should align to the assembly to be counted as complete. Default: ' + str(min_coverage_for_complete_gene))
 
     args = parser.parse_args()
 
