@@ -1,0 +1,43 @@
+#! /usr/bin/env python
+from __future__ import print_function
+import json
+import argparse
+
+################################################################################################################    
+def open_assessment_file(fname):
+    try:
+        h = open(fname)
+        d = json.load(h)
+        h.close()
+    except Exception, e:
+        sys.stderr.write("Warning: Could not read JSON data from file '" + fname + "'. Aborting.\n")
+        exit(1)
+
+    format_version = d.get('assessment_format')
+    if not format_version:
+        sys.stderr.write("Error: file '" + f + "' is not an assessment file from petimeter.\n")
+        exit(2)
+    elif format_version != "1.0":
+        sys.stderr.write("Warning: this version of petimeter may not read all details file of version '" + format_version + "'.\n")
+
+    metadata = d.get('input')
+    if not metadata:
+        raise IOError('Cannot find meta data in assessment file.')
+    
+    return metadata
+
+#############################################################################################
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Take a petimeter assessment file (in JSON format) and output humanly-readable version of the analysis meta-data.')
+    parser.add_argument('jsonfile')
+    args = parser.parse_args()
+
+    metadata = open_assessment_file(args.jsonfile)
+    l = 0
+    for k in metadata.keys():
+        if len(k) > l:
+            l = len(k)
+
+    for k,val in metadata.items():
+        print('{:{}} {}'.format(k, l, val))
