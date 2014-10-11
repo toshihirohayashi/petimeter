@@ -272,8 +272,13 @@ if __name__ == "__main__":
     parser.add_argument('output_prefix')
     parser.add_argument('jsonfiles', nargs='+')
     parser.add_argument('-e', '--max_extent', action='store', help='Maximal extent of UTRs in plot. Instead of choosing max extent from data, use this number.')
+    parser.add_argument('-t', '--complete_threshold', action='store', default=c_complete_threshold, help='This is how much of a cDNA or CDS should align to the assembly to be counted as complete. Default: ' + str(c_complete_threshold))
+
 
     args = parser.parse_args()
+
+    if args.complete_threshold:
+        c_complete_threshold = float(args.complete_threshold)
 
     data={}                     # We will collect all data here for plotting
     name_list=[]
