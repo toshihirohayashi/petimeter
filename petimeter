@@ -245,8 +245,15 @@ if __name__ == "__main__":
             aLengths[k] = len(s)
             i += 1
     except MemoryError:
-        sys.stderr.write('Out of memory after reading ' + string(i) + ' contigs. Last contig was: ' + id)
+        sys.stderr.write('Out of memory after reading ' + str(i) + ' contigs. Last contig was: ' + id + '\n')
         exit(1)
+    except IOError as e:
+        sys.stderr.write('Could not open ' + args.assembly_file + '. ' + e.strerror + '.\n')
+        exit(1)
+    except:
+        sys.stderr.write('Could not read ' + args.assembly_file + '. Aborting.\n')
+        exit(1)
+
 
     inputdata['n_contigs']=len(aLengths.keys())
     if verbose:
