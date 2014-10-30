@@ -156,4 +156,4 @@ if __name__ == "__main__":
         else:
             output_venn(geneset, args.cover_threshold)
     except Error as e:
-        sys.stderr.write("petimeter_venn error: " + str(e)
+        sys.stderr.write("petimeter_venn error: " + str(e))
