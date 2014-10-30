@@ -145,8 +145,8 @@ if __name__ == "__main__":
 
             genedict = d['cDNA_coverage']
             geneset[name] = frozenset(filter(lambda x: genedict[x] >= args.cover_threshold, genedict.keys()))
-    except Exception as e:
-        sys.stderr.write("petimeter_venn: " + str(e))
+        except Exception as e:
+            sys.stderr.write("petimeter_venn: " + str(e))
 
     if len(name_list) < 2:
         sys.stderr.write("petimeter_venn: Requires at least two input files, got " + str(len(name_list)))
