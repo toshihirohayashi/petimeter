@@ -155,5 +155,5 @@ if __name__ == "__main__":
             output_intersection(geneset, args.cover_threshold)
         else:
             output_venn(geneset, args.cover_threshold)
-    except Error as e:
+    except Exception as e:
         sys.stderr.write("petimeter_venn error: " + str(e))
