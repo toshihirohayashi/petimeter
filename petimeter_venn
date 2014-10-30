@@ -137,7 +137,7 @@ if __name__ == "__main__":
     for f in [args.jsonfile] + args.jsonfiles:
         (name, d) = open_details_file(f)
         if name in name_list:
-            sys.stderr.write("Error: There are two assemblies named '" + dataset_name + "' in the input. Aborting.\n")
+            sys.stderr.write("Error: There are two assemblies named '" + name + "' in the input. Aborting.\n")
             exit(3)
         else:
             name_list.append(name)
