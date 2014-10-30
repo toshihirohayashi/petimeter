@@ -12,8 +12,8 @@ def open_details_file(fname):
         h = open(fname)
         d = json.load(h)
     except Exception, e:
-        sys.stderr.write("Warning: Could not read JSON data from file '" + fname + "'. Aborting.\n")
-        exit(1)
+        raise IOError("Warning: Could not read JSON data from file '" + fname + "'.")
+
 
     dataset_name = d.get('name')
     if not dataset_name:
@@ -132,25 +132,28 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    geneset={}                     # We will collect all data here for plotting
-    name_list=[]                # To preserve the order of the input
-    for f in [args.jsonfile] + args.jsonfiles:
-        (name, d) = open_details_file(f)
-        if name in name_list:
-            sys.stderr.write("Error: There are two assemblies named '" + name + "' in the input. Aborting.\n")
-            exit(3)
+    try:
+        geneset={}                     # We will collect all data here for plotting
+        name_list=[]                # To preserve the order of the input
+        for f in [args.jsonfile] + args.jsonfiles:
+            (name, d) = open_details_file(f)
+            if name in name_list:
+                sys.stderr.write("Error: There are two assemblies named '" + name + "' in the input. Aborting.\n")
+                exit(3)
+            else:
+                name_list.append(name)
+
+            genedict = d['cDNA_coverage']
+            geneset[name] = frozenset(filter(lambda x: genedict[x] >= args.cover_threshold, genedict.keys()))
+
+        if not args.intersection and len(name_list) > large_dataset and not args.yes_i_know_what_i_am_doing:
+            sys.stderr.write('You have ' + str(len(name_list)) + ' input files. That might use a lot of resources. Use\nthe -y flag to indicate that you are aware of this!\n')
+            exit(4)
+
+
+        if args.intersection:
+            output_intersection(geneset, args.cover_threshold)
         else:
-            name_list.append(name)
-
-        genedict = d['cDNA_coverage']
-        geneset[name] = frozenset(filter(lambda x: genedict[x] >= args.cover_threshold, genedict.keys()))
-
-    if not args.intersection and len(name_list) > large_dataset and not args.yes_i_know_what_i_am_doing:
-        sys.stderr.write('You have ' + str(len(name_list)) + ' input files. That might use a lot of resources. Use\nthe -y flag to indicate that you are aware of this!\n')
-        exit(4)
-
-
-    if args.intersection:
-        output_intersection(geneset, args.cover_threshold)
-    else:
-        output_venn(geneset, args.cover_threshold)
+            output_venn(geneset, args.cover_threshold)
+    except Error as e:
+        sys.stderr.write("petimeter_venn error: " + str(e)
