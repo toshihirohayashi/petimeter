@@ -4,7 +4,6 @@ import argparse
 import sys 
 from itertools import *
 
-cover_threshold=0.95     # How well should the cDNA have been matched to the assembly? This matches 'min_coverage_for_complete_gene' in petimeter.
 large_dataset=10          # Require the --yes-i-know-what-i-am-doing flag from user if more input files than this
 
 ################################################################################################################    
@@ -35,27 +34,6 @@ def powerset(iterable):
     return chain.from_iterable(combinations(s, r) for r in range(1,len(s)+1))
 
 
-
-def intersection(d, name1, name2):
-    '''
-    Compute how many genes assemblies 1 and 2 share.
-    '''
-
-    # Extract the dictionaries containing pairs of transcript name and transcript alignment extent ('coverage')
-    t1 = d[name1]['cDNA_coverage']
-    t2 = d[name2]['cDNA_coverage']
-
-    # Filter away tiny hits, using a dict comprehension:
-    x1 = {acc: cov for (acc, cov) in t1.iteritems() if cov >= cover_threshold}
-    x2 = {acc: cov for (acc, cov) in t2.iteritems() if cov >= cover_threshold}
-
-    # Extract transcipt names as a set
-    s1 = set(x1.keys())
-    return len(s1.intersection(x2.keys()))
-
-
-    
-
 def restricted_float(x):
     x = float(x)
     if x <= 0.0 or x > 1.0:
@@ -63,9 +41,9 @@ def restricted_float(x):
     return x
 
 
-def gene_unique(d, name1, name2):
+def gene_unique(d, name1, name2, cover_threshold):
     '''
-    Count number of genes found in assembly name1, which are not found in name2.
+    Find genes found in assembly name1, which are not found in name2.
     '''
     # Extract the dictionaries containing pairs of transcript name and transcript alignment extent ('coverage')
     t1 = d[name1]['cDNA_coverage']
@@ -82,6 +60,59 @@ def gene_unique(d, name1, name2):
 
     return n
 
+
+################################################################################################################    
+
+def intersection(d, name1, name2, cover_threshold):
+    '''
+    Compute shared genes betweeb assemblies 1 and 2
+    '''
+
+    # Extract transcipt names as a set
+    s1 = set(x1.keys())
+    return s1.intersection(x2.keys())
+
+
+def output_intersection(geneset, cover_threshold):
+    name1=geneset.keys()[0]
+    snittet=frozenset(geneset[name1])
+    del geneset[name1]
+    
+    for name, genes in geneset.items():
+        snittet = snittet.intersection(genes)
+
+    print("\n".join(snittet))
+
+
+################################################################################################################    
+
+def output_venn(geneset, cover_threshold):
+    print "Requiring", str(100*cover_threshold), "% of cDNA mapped."
+    print "Assemblies: ", ", ".join(name_list)
+    print "The gene set is formed as the intersection of the named assemblies."
+    print "The count is the number of genes in the intersection disjoint from the other gene sets."
+    print " Count  Gene set"
+
+    nameset = frozenset(name_list)
+    size = 1                    # Used to detect when combination size changes, because we want an extra newline then
+    for s in powerset(name_list): # Iterate over all "non-trivial" combinations of assemblies
+        chosen = frozenset(s)
+        intersection_of_chosen_genes = reduce(lambda acc, s: acc.intersection(geneset[s]), s[1:], frozenset(geneset[s[0]])) # Combine the chosen gene sets
+        # Now look get genes found in all other assemblies
+        complement = nameset - chosen
+        union_of_complement_genes = reduce(lambda acc, s: acc.union(geneset[s]), complement, frozenset([]))
+     
+        difference = intersection_of_chosen_genes - union_of_complement_genes
+        if len(chosen) > size:
+            size += 1
+            print
+        print "{:6}\t{}".format(len(difference), ", ".join(s)) # , "\t", difference
+
+    sum = 0                     # Add up all the counts we find: will be the size of the union of gene sets
+    union = reduce(lambda acc, s: acc.union(geneset[s]), nameset, frozenset([]))
+    print "\n{:6} in the union of the gene sets".format(len(union))
+
+
 ################################################################################################################    
 
 if __name__ == "__main__":
@@ -91,14 +122,15 @@ if __name__ == "__main__":
         print("This script requires Python version 2.7 or later")
         sys.exit(1)
 
-    parser = argparse.ArgumentParser(description='Take two or several JSON files from petimeter and compute Venn diagram information.')
-    parser.add_argument('-t', '--threshold', type=restricted_float, dest='cover_threshold', action='store',  help='Minimum alignment fraction of cDNA on contig. Default is 0.95. Set to 0 to get _every_ trace of a gene matched upp.', default=cover_threshold)
-    parser.add_argument('-y', '--yes_i_know_what_i_am_doing', help="Time and space complexity grows a lot with the number of input files. Issue this flag to indicate that you understand this.")
+    parser = argparse.ArgumentParser(description='Take two or several JSON files from petimeter and compute Venn diagram information. Or compute the intersection of the gene sets.')
+    parser.add_argument('-t', '--threshold', type=restricted_float, dest='cover_threshold', action='store',  help='Minimum alignment fraction of cDNA on contig. Default is 0.95. Set to 0 to get _every_ trace of a gene matched upp.', default=0.95)
+    parser.add_argument('-y', '--yes_i_know_what_i_am_doing', action='store_true', help="Time and space complexity grows a lot with the number of input files. Issue this flag to indicate that you understand this.")
+    parser.add_argument('-i', '--intersection', action='store_true', help='Output the genes that are found in all input assemblies.')
+#    parser.add_argument('-u', '--unique', help='Output the genes that are unique to the first assembly.')
     parser.add_argument('jsonfile')
     parser.add_argument('jsonfiles', nargs='+')
 
     args = parser.parse_args()
-    cover_threshold = float(args.cover_threshold)
 
     geneset={}                     # We will collect all data here for plotting
     name_list=[]                # To preserve the order of the input
@@ -111,34 +143,14 @@ if __name__ == "__main__":
             name_list.append(name)
 
         genedict = d['cDNA_coverage']
-        geneset[name] = frozenset(filter(lambda x: genedict[x] >= cover_threshold, genedict.keys()))
+        geneset[name] = frozenset(filter(lambda x: genedict[x] >= args.cover_threshold, genedict.keys()))
 
-    if len(name_list) > large_dataset and not args.yes_i_know_what_i_am_doing:
+    if not args.intersection and len(name_list) > large_dataset and not args.yes_i_know_what_i_am_doing:
         sys.stderr.write('You have ' + str(len(name_list)) + ' input files. That might use a lot of resources. Use\nthe -y flag to indicate that you are aware of this!\n')
         exit(4)
 
-    print "Requiring", str(100*cover_threshold), "% of cDNA mapped."
-    print "Assemblies: ", ", ".join(name_list)
-    print "The gene set is formed as the intersection of the named assemblies."
-    print "The count is the number of genes in the intersection disjoint from the other gene sets."
-    print " Count  Gene set"
 
-    nameset = frozenset(name_list)
-    size = 1                    # Used to detect when combination size changes
-    for s in powerset(name_list): # Iterate over all "non-trivial" combinations of assemblies
-        chosen = frozenset(s)
-        intersection_of_chosen_genes = reduce(lambda acc, s: acc.intersection(geneset[s]), s[2:], frozenset(geneset[s[0]])) # Combine the chosen gene sets
-        # Now look get genes found in all other assemblies
-        complement = nameset - chosen
-        union_of_complement_genes = reduce(lambda acc, s: acc.union(geneset[s]), complement, frozenset([]))
-        
-        difference = intersection_of_chosen_genes - union_of_complement_genes
-        if len(chosen) > size:
-            size += 1
-            print
-        print "{:6}\t{}".format(len(difference), ", ".join(s)) # , "\t", difference
-
-    sum = 0                     # Add up all the counts we find: will be the size of the union of gene sets
-    union = reduce(lambda acc, s: acc.union(geneset[s]), nameset, frozenset([]))
-    print "\n{:6} in the union of the gene sets".format(len(union))
-
+    if args.intersection:
+        output_intersection(geneset, args.cover_threshold)
+    else:
+        output_venn(geneset, args.cover_threshold)
