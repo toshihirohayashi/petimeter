@@ -12,7 +12,7 @@ def print_descriptors(detailed, d, pre_string, post_string):
         l = ['mean','stdev','median','min','max']
 
     for k in l:
-        stdout.write('{}{:.{}f}{}'.format(pre_string, d[k], n_decimals, post_string))
+        stdout.write('{}{:7.{}f}{}'.format(pre_string, d[k], n_decimals, post_string))
 
 
 def print_csv(detailed, d, elements, l):
@@ -35,11 +35,11 @@ def print_text(detailed, d, elements, name_list):
     longest_name = max(map(len, d.keys()))
     prefix = ' ' * (longest_name + 1)
     if detailed: 
-        print prefix + "|Completeness|      cDNA coverage       |         5' extent        |         3' extent        |     Genes per contig"
-        print prefix + "| cDNA   CDS | mean   sd med.  min  max | mean   sd med.  min  max | mean   sd med.  min  max | mean   sd med.  min  max"
+        print prefix + "|Completeness|       cDNA coverage       |         5' extent        |         3' extent        |     Genes per contig"
+        print prefix + "| cDNA   CDS |  mean   sd med.  min  max | mean   sd med.  min  max | mean   sd med.  min  max | mean   sd med.  min  max"
     else:
-        print prefix + "|Completeness|cDNA cov. |    5' extent   |    3' extent   |Genes/contig"
-        print prefix + "| cDNA   CDS | mean  sd |   mean     sd  |   mean     sd  | mean  sd"
+        print prefix + "|Completeness|  cDNA coverage |     5' extent  |    3' extent   |   Genes/contig"
+        print prefix + "| cDNA   CDS |    mean     sd |    mean     sd |   mean     sd  |    mean    sd"
 
     for k in name_list:
         stdout.write('{:<{}} |{:>5} {:>5} '.format(k, longest_name, d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
