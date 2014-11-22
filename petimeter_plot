@@ -55,7 +55,7 @@ def plot_bars(prefix, d, order):
     '''
     plt.clf()
 
-    width = 0.3
+    width = 0.4
     labels = order # d.keys()    
     y = np.arange(0.5, len(labels)/2.0+0.5, 0.5)
     
@@ -243,8 +243,8 @@ def plot_cdna_coverage(prefix, d, order):
  #    for name in d.keys():
 #        data[name] = d[name]['cDNA_coverage']
 
-        #    plt.violinplot(data) # Only works in matplotlib version 1.4
-    plt.boxplot(data, notch=True)
+    plt.violinplot(data) # Only works in matplotlib version 1.4
+#    plt.boxplot(data, notch=True)
 #    plt.xticks(range(1+len(order)), [" "].append(order))
 
 #        x = np.array(d[name]['cDNA_coverage'])
