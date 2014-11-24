@@ -160,7 +160,7 @@ if __name__ == "__main__":
         print_text(args.long, data, elements, name_list)
     elif args.format == 'html':
         print_html(args.long, data, elements, name_list)
-    elif args.format == 'latex':
+    elif args.format == 'latex' or args.format == 'tex':
         print_latex(args.long, data, elements, name_list)
     elif args.format == 'md' or args.format == 'markdown':
         print "Markdown output not implemented yet."
