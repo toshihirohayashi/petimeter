@@ -117,13 +117,13 @@ def find_x_percent_extents(x, d):
     return (left95p, right95p)
 
 
-def plot_utrs(prefix, max_extent, d, order):
+def plot_non_genic(prefix, max_extent, d, order):
     '''
     Input: 
        - prefix is for the output filename,
        - d is the dict of dicts with datasets
 
-    Output: A pdf, named using the prefix, of densities of 5' and 3' UTRS lengths.
+    Output: A pdf, named using the prefix, of densities of 5' and 3' non-genic lengths.
     '''
     
     plt.clf()
@@ -167,10 +167,10 @@ def plot_utrs(prefix, max_extent, d, order):
         ax3p.set_xlim(0, right_percentile)
 
 
-    ax5p.set_title('Possible UTR extent')
+    ax5p.set_title('Possible non-genic extent')
 #    ax5p.xlabel("UTR extent on 5' and 3' end of CDS")  
     plt.legend(fontsize='x-small')
-    file_name = prefix +'_utrs.pdf' # output file. Suffix decides format
+    file_name = prefix +'_nongenic.pdf' # output file. Suffix decides format
     plt.savefig(file_name, transparent=True)
     plt.close()
 
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Take one or several JSON files from petimeter and plot the distributions.')
     parser.add_argument('output_prefix')
     parser.add_argument('jsonfiles', nargs='+')
-    parser.add_argument('-e', '--max_extent', action='store', help='Maximal extent of UTRs in plot. Instead of choosing max extent from data, use this number.')
+    parser.add_argument('-e', '--max_extent', action='store', help='Maximal extent of non-genic length (around genes) in plot. Instead of choosing max extent from data, use this number.')
     parser.add_argument('-t', '--complete_threshold', action='store', default=c_complete_threshold, help='This is how much of a cDNA or CDS should align to the assembly to be counted as complete. Default: ' + str(c_complete_threshold))
 
 
@@ -302,6 +302,6 @@ if __name__ == "__main__":
             data[dataset_name][k] = rawdata[k]
 
     plot_counts(args.output_prefix, data, name_list)
-    plot_utrs(args.output_prefix, args.max_extent, data, name_list)
+    plot_non_genic(args.output_prefix, args.max_extent, data, name_list)
     plot_cdna_coverage(args.output_prefix, data, name_list)
     plot_bars(args.output_prefix, data, name_list)
