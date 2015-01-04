@@ -101,9 +101,9 @@ def getStats(db, gene):
     
     if not cdsBoundaries:                       # No CDS?
         stats['cds_complete'] = False
-    elif min(cdsBoundaries) - gene.start < 3: # No 5' UTR in hit
+    elif min(cdsBoundaries) - gene.start < utr_overhang_for_complete_cds: # No 5' UTR in hit
         stats['cds_complete'] = False
-    elif  gene.end - max(cdsBoundaries) < 3: # No 3' UTR in hit
+    elif  gene.end - max(cdsBoundaries) < utr_overhang_for_complete_cds: # No 3' UTR in hit
         stats['cds_complete'] = False
     else:
         stats['cds_complete'] = True # Hit passed both tests, there seems to be a complete CDS
