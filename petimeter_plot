@@ -14,6 +14,7 @@ from itertools import cycle
 # Constants
 c_complete_threshold = 0.95     # 95% of a cDNAmust be aligned in order to count as "complete", otherwise partial.
 c_partial_threshold = 0.5
+c_show_counts = False
 
 def count_complete_etc(l):
     '''
@@ -48,7 +49,7 @@ def autolabel(a, rects, labels):
         a.text(w-200, rect.get_y()+rect.get_height()/2, '%d'%int(w), ha='right', va='center', zorder=20)
 
 
-def plot_bars(prefix, d, order):
+def plot_bars(prefix, d, order, show_counts):
     '''Input: 
        - prefix is for the output filename,
        - d is the dict of dicts with datasets
@@ -64,7 +65,8 @@ def plot_bars(prefix, d, order):
     completes = map(lambda x: x[0], counts)
     partials  = map(lambda x: x[1], counts)
     fragmented= map(lambda x: x[2], counts)
-    total = map(lambda a,b,c: a+b+c, completes, partials, fragmented)
+    total2 = map(lambda a,b: a+b, completes, partials)
+    total3 = map(lambda a,b,c: a+b+c, completes, partials, fragmented)
 
     scilifelabgreen=(0.523, 0.738, 0.281)
     scilifelabblue=(0.0469, 0.586, 0.684)
@@ -84,7 +86,12 @@ def plot_bars(prefix, d, order):
 
     plt.tight_layout()
 
-    autolabel(plt, p3, total)
+    if show_counts:
+        autolabel(plt, p1, completes)
+        autolabel(plt, p2, total2)
+        autolabel(plt, p3, total3)
+
+
 
     file_name = prefix +'_contents.pdf' # output file. Suffix decides format
     plt.savefig(file_name, transparent=True)
@@ -273,6 +280,7 @@ if __name__ == "__main__":
     parser.add_argument('jsonfiles', nargs='+')
     parser.add_argument('-e', '--max_extent', action='store', help='Maximal extent of non-genic length (around genes) in plot. Instead of choosing max extent from data, use this number.')
     parser.add_argument('-t', '--complete_threshold', action='store', default=c_complete_threshold, help='This is how much of a cDNA or CDS should align to the assembly to be counted as complete. Default: ' + str(c_complete_threshold))
+    parser.add_argument('-c', '--show_counts', dest='c_show_counts', action='store_true', help='Show the actual counts in the bar plot of gene content.')
 
 
     args = parser.parse_args()
@@ -304,4 +312,6 @@ if __name__ == "__main__":
     plot_counts(args.output_prefix, data, name_list)
     plot_non_genic(args.output_prefix, args.max_extent, data, name_list)
     plot_cdna_coverage(args.output_prefix, data, name_list)
-    plot_bars(args.output_prefix, data, name_list)
+    plot_bars(args.output_prefix, data, name_list, args.c_show_counts)
+
+    
