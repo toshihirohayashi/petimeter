@@ -70,8 +70,7 @@ you have the right packages installed. Petimeter needs:
 - seaborn
 - termcolor
 
-Petimeter requires Python version 2.7 or later. Does probably not work
-wih 3.0.
+Petimeter requires Python version 2.7 or later, and works in 3.4?
 
 ---
 The word "petimeter" is Swedish for "picky person" and is derived from
