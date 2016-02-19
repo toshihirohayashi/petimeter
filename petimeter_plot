@@ -7,6 +7,7 @@ import functools
 import seaborn as sns
 import numpy as np
 from itertools import cycle
+from functools import reduce
 
 #[name]['cdna_coverage'])
 #, data[name]['five_prime_extent'], data[name]['three_prime_extent'])
@@ -60,20 +61,20 @@ def plot_bars(prefix, d, order, show_counts):
     labels = order # d.keys()    
     y = np.arange(0.5, len(labels)/2.0+0.5, 0.5)
     
-    counts = map(lambda n: count_complete_etc(d[n]['cDNA_coverage'].values()), labels)
+    counts = [count_complete_etc(list(d[n]['cDNA_coverage'].values())) for n in labels]
 
-    completes = map(lambda x: x[0], counts)
-    partials  = map(lambda x: x[1], counts)
-    fragmented= map(lambda x: x[2], counts)
-    total2 = map(lambda a,b: a+b, completes, partials)
-    total3 = map(lambda a,b,c: a+b+c, completes, partials, fragmented)
+    completes = [x[0] for x in counts]
+    partials  = [x[1] for x in counts]
+    fragmented= [x[2] for x in counts]
+    total2 = list(map(lambda a,b: a+b, completes, partials))
+    total3 = list(map(lambda a,b,c: a+b+c, completes, partials, fragmented))
 
     scilifelabgreen=(0.523, 0.738, 0.281)
     scilifelabblue=(0.0469, 0.586, 0.684)
 
     p1 = plt.barh(y, completes,  width, color=scilifelabgreen, align='center', zorder=10)
     p2 = plt.barh(y, partials,   width, color=scilifelabblue, left=completes, align='center', zorder=10)
-    p3 = plt.barh(y, fragmented, width, color="0.75", left=map(lambda a,b: a+b, completes,partials), align='center', zorder=10)
+    p3 = plt.barh(y, fragmented, width, color="0.75", left=list(map(lambda a,b: a+b, completes,partials)), align='center', zorder=10)
 
     plt.xlabel('# cDNA in assemblies')
     plt.yticks(y, labels)
@@ -113,9 +114,9 @@ def find_x_percent_extents(x, d):
     # too much flatness in the margins.
     left95p = 0
     right95p = 0
-    for name in d.keys():
-        three_prime_extent = map(lambda x: x, d[name]['three_prime_extent'].values())
-        five_prime_extent = map(lambda x: -x, d[name]['five_prime_extent'].values())
+    for name in list(d.keys()):
+        three_prime_extent = [x for x in list(d[name]['three_prime_extent'].values())]
+        five_prime_extent = [-x for x in list(d[name]['five_prime_extent'].values())]
 
         (a,b) = minmax_of_x_percent_of_list(x, five_prime_extent)
         left95p = min(left95p, a)
@@ -143,8 +144,8 @@ def plot_non_genic(prefix, max_extent, d, order):
     linecycler = cycle(lines)
   
     for name in order: # d.keys():
-        three_prime_extent = map(lambda x: x, d[name]['three_prime_extent'].values())
-        five_prime_extent = map(lambda x: -x, d[name]['five_prime_extent'].values())
+        three_prime_extent = [x for x in list(d[name]['three_prime_extent'].values())]
+        five_prime_extent = [-x for x in list(d[name]['five_prime_extent'].values())]
 
         x5 = np.array(five_prime_extent)
         x3 = np.array(three_prime_extent)
@@ -211,9 +212,9 @@ def plot_counts(prefix, d, order):
 
     x = [0.05 + 0.05 * x for x in range(0, 19)]
     for name in order: # d.keys():
-        coverage = d[name]['cDNA_coverage'].values()
+        coverage = list(d[name]['cDNA_coverage'].values())
         count_fcn = functools.partial(count_larger_elems, coverage)
-        y = map(count_fcn, x)
+        y = list(map(count_fcn, x))
         ax.plot(x, y, next(linecycler), label=name)
 
     plt.ylim(ymin=0)
@@ -246,7 +247,7 @@ def plot_cdna_coverage(prefix, d, order):
     plt.xlabel("")
 #    plt.xlim(0,1)
     
-    data = map(lambda n: d[n]['cDNA_coverage'].values(), order)
+    data = [list(d[n]['cDNA_coverage'].values()) for n in order]
  #    for name in d.keys():
 #        data[name] = d[name]['cDNA_coverage']
 
@@ -271,7 +272,7 @@ def plot_cdna_coverage(prefix, d, order):
 if __name__ == "__main__":
 
     # Requires python 2.7 or later (due to the dictionary comprehensions?)
-    if sys.version_info[0] < 2 or (sys.version_info[0] >= 2 and sys.version_info[1] < 7):
+    if (sys.version_info[0] == 1) or (sys.version_info[0] == 2 and sys.version_info[1] < 7):
         print("This script requires Python version 2.7 or later")
         sys.exit(1)
 
@@ -294,7 +295,7 @@ if __name__ == "__main__":
         try:
             j_file = open(f)
             rawdata = json.load(j_file)
-        except Exception, e:
+        except Exception as e:
             sys.stderr.write("Warning: Could not read JSON data from file '" + f + "'. Ignoring and continuing.\n")
 
         dataset_name = rawdata.get('name')
@@ -306,7 +307,7 @@ if __name__ == "__main__":
             continue
 
         data[dataset_name] = {}
-        for k in rawdata.keys():
+        for k in list(rawdata.keys()):
             data[dataset_name][k] = rawdata[k]
 
     plot_counts(args.output_prefix, data, name_list)

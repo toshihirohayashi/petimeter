@@ -32,7 +32,7 @@ def open_details_file(fname):
     try:
         h = open(fname)
         d = json.load(h)
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write("Warning: Could not read JSON data from file '" + fname + "'. Aborting.\n")
         exit(1)
 
@@ -48,7 +48,7 @@ def open_details_file(fname):
 if __name__ == "__main__":
 
     # Requires python 2.7 or later (due to the dictionary comprehensions?)
-    if sys.version_info[0] < 2 or (sys.version_info[0] >= 2 and sys.version_info[1] < 7):
+    if (sys.version_info[0] == 1) or (sys.version_info[0] == 2 and sys.version_info[1] < 7):
         print("This script requires Python version 2.7 or later")
         sys.exit(1)
 
@@ -73,14 +73,14 @@ if __name__ == "__main__":
     a2 = data2['cDNA_coverage']
 
     # Get the union of transcript accessions
-    keys = list(a1.viewkeys() | a2.viewkeys())
+    keys = list(a1.keys() | a2.keys())
 
     if args.jitter:
-        l1 = map(lambda k: random.gauss(0,0.002) + a1.get(k, 0), keys)
-        l2 = map(lambda k: random.gauss(0,0.002) + a2.get(k, 0), keys)
+        l1 = [random.gauss(0,0.002) + a1.get(k, 0) for k in keys]
+        l2 = [random.gauss(0,0.002) + a2.get(k, 0) for k in keys]
     else:
-        l1 = map(lambda k: a1.get(k, 0), keys)
-        l2 = map(lambda k: a2.get(k, 0), keys)
+        l1 = [a1.get(k, 0) for k in keys]
+        l2 = [a2.get(k, 0) for k in keys]
 
 
     
