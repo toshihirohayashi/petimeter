@@ -73,7 +73,7 @@ if __name__ == "__main__":
     a2 = data2['cDNA_coverage']
 
     # Get the union of transcript accessions
-    keys = list(a1.keys() | a2.keys())
+    keys = list(a1.keys()) + list(a2.keys())
 
     if args.jitter:
         l1 = [random.gauss(0,0.002) + a1.get(k, 0) for k in keys]
