@@ -3,6 +3,7 @@ import json
 import argparse
 import sys 
 from itertools import *
+from functools import reduce
 
 large_dataset=10          # Require the --yes-i-know-what-i-am-doing flag from user if more input files than this
 
@@ -11,7 +12,7 @@ def open_details_file(fname):
     try:
         h = open(fname)
         d = json.load(h)
-    except Exception, e:
+    except Exception as e:
         raise IOError("Could not read JSON data from file '" + fname + "'.")
 
 
@@ -50,11 +51,11 @@ def gene_unique(d, name1, name2, cover_threshold):
     t2 = d[name2]['cDNA_coverage']
 
     # Filter away tiny hits, using a dict comprehension:
-    x1 = {acc: cov for (acc, cov) in t1.iteritems() if cov >= cover_threshold}
-    x2 = {acc: cov for (acc, cov) in t2.iteritems() if cov >= cover_threshold}
+    x1 = {acc: cov for (acc, cov) in t1.items() if cov >= cover_threshold}
+    x2 = {acc: cov for (acc, cov) in t2.items() if cov >= cover_threshold}
 
     n = 0
-    for key in x1.keys():
+    for key in list(x1.keys()):
         if not x2.get(key):
             n += 1
 
@@ -70,28 +71,28 @@ def intersection(d, name1, name2, cover_threshold):
 
     # Extract transcipt names as a set
     s1 = set(x1.keys())
-    return s1.intersection(x2.keys())
+    return s1.intersection(list(x2.keys()))
 
 
 def output_intersection(geneset, cover_threshold):
-    name1=geneset.keys()[0]
+    name1=list(geneset.keys())[0]
     snittet=frozenset(geneset[name1])
     del geneset[name1]
     
-    for name, genes in geneset.items():
+    for name, genes in list(geneset.items()):
         snittet = snittet.intersection(genes)
 
-    print("\n".join(snittet))
+    print(("\n".join(snittet)))
 
 
 ################################################################################################################    
 
 def output_venn(geneset, cover_threshold):
-    print "Requiring", str(100*cover_threshold), "% of cDNA mapped."
-    print "Assemblies: ", ", ".join(name_list)
-    print "The gene set is formed as the intersection of the named assemblies."
-    print "The count is the number of genes in the intersection disjoint from the other gene sets."
-    print " Count  Gene set"
+    print("Requiring", str(100*cover_threshold), "% of cDNA mapped.")
+    print("Assemblies: ", ", ".join(name_list))
+    print("The gene set is formed as the intersection of the named assemblies.")
+    print("The count is the number of genes in the intersection disjoint from the other gene sets.")
+    print(" Count  Gene set")
 
     nameset = frozenset(name_list)
     size = 1                    # Used to detect when combination size changes, because we want an extra newline then
@@ -105,12 +106,12 @@ def output_venn(geneset, cover_threshold):
         difference = intersection_of_chosen_genes - union_of_complement_genes
         if len(chosen) > size:
             size += 1
-            print
-        print "{:6}\t{}".format(len(difference), ", ".join(s)) # , "\t", difference
+            print("")
+        print("{:6}\t{}".format(len(difference), ", ".join(s))) # , "\t", difference
 
     sum = 0                     # Add up all the counts we find: will be the size of the union of gene sets
     union = reduce(lambda acc, s: acc.union(geneset[s]), nameset, frozenset([]))
-    print "\n{:6} in the union of the gene sets".format(len(union))
+    print("\n{:6} in the union of the gene sets".format(len(union)))
 
 
 ################################################################################################################    
@@ -118,7 +119,7 @@ def output_venn(geneset, cover_threshold):
 if __name__ == "__main__":
 
     # Requires python 2.7 or later (due to the dictionary comprehensions?)
-    if sys.version_info[0] < 2 or (sys.version_info[0] >= 2 and sys.version_info[1] < 7):
+    if (sys.version_info[0] == 1) or (sys.version_info[0] == 2 and sys.version_info[1] < 7):
         print("This script requires Python version 2.7 or later")
         sys.exit(1)
 
@@ -144,7 +145,7 @@ if __name__ == "__main__":
                 name_list.append(name)
 
             genedict = d['cDNA_coverage']
-            geneset[name] = frozenset(filter(lambda x: genedict[x] >= args.cover_threshold, genedict.keys()))
+            geneset[name] = frozenset([x for x in list(genedict.keys()) if genedict[x] >= args.cover_threshold])
         except Exception as e:
             sys.stderr.write("petimeter_venn: " + str(e))
 

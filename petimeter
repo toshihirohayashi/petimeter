@@ -30,26 +30,26 @@ def collectResults(stats, genesPerContig):
     '''
     details = {}
     results = {}
-    results['genes_per_contig'] = descriptives(genesPerContig.values())
-    results['genes_per_contig']['max_contig'] = max(genesPerContig.iterkeys(), key=(lambda key: genesPerContig[key]))
+    results['genes_per_contig'] = descriptives(list(genesPerContig.values()))
+    results['genes_per_contig']['max_contig'] = max(iter(genesPerContig.keys()), key=(lambda key: genesPerContig[key]))
 
-    transcriptnames = map(lambda s: s['transcript'], stats)
+    transcriptnames = list(map(lambda s: s['transcript'], stats))
 
-    fivePrimeExtents = map(lambda s: s['5prime_extent'], stats)
+    fivePrimeExtents = list(map(lambda s: s['5prime_extent'], stats))
     details['five_prime_extent'] = dict(zip(transcriptnames, fivePrimeExtents))
     results['five_prime_extent'] = descriptives(fivePrimeExtents)
 
-    threePrimeExtents = map(lambda s: s['3prime_extent'], stats)
+    threePrimeExtents = list(map(lambda s: s['3prime_extent'], stats))
     details['three_prime_extent'] = dict(zip(transcriptnames, threePrimeExtents))
     results['three_prime_extent'] = descriptives(threePrimeExtents)
 
-    cDNACoverage = map(lambda s: s['covered'], stats)
+    cDNACoverage = list(map(lambda s: s['covered'], stats))
     details['cDNA_coverage'] = dict(zip(transcriptnames, cDNACoverage))
     results['cDNA_coverage'] = descriptives(cDNACoverage)
 
     results['completeness'] = {}
-    results['completeness']['cDNA'] = len(filter(lambda x: x['covered'] > min_coverage_for_complete_gene, stats))
-    results['completeness']['CDS'] = len(filter(lambda x: x['cds_complete'], stats))
+    results['completeness']['cDNA'] = len(list(filter(lambda x: x['covered'] > min_coverage_for_complete_gene, stats)))
+    results['completeness']['CDS'] = len(list(filter(lambda x: x['cds_complete'], stats)))
 
     return (results, details)
 
@@ -163,7 +163,7 @@ def output_files(prefix):
 if __name__ == "__main__":
 
     # Requires python 2.7 or later (due to the dictionary comprehensions?)
-    if sys.version_info[0] < 2 or (sys.version_info[0] >= 2 and sys.version_info[1] < 7):
+    if (sys.version_info[0] == 1) or (sys.version_info[0] == 2 and sys.version_info[1] < 7):
         print("This script requires Python version 2.7 or later")
         sys.exit(1)
 

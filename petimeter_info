@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from __future__ import print_function
+
 import json
 import argparse
 
@@ -9,7 +9,7 @@ def open_assessment_file(fname):
         h = open(fname)
         d = json.load(h)
         h.close()
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write("Warning: Could not read JSON data from file '" + fname + "'. Aborting.\n")
         exit(1)
 
@@ -35,9 +35,9 @@ if __name__ == "__main__":
 
     metadata = open_assessment_file(args.jsonfile)
     l = 0
-    for k in metadata.keys():
+    for k in list(metadata.keys()):
         if len(k) > l:
             l = len(k)
 
-    for k,val in metadata.items():
+    for k,val in list(metadata.items()):
         print('{:{}} {}'.format(k, l, val))

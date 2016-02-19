@@ -2,6 +2,7 @@
 # Requires python 2.7 or later
 import json
 import argparse
+import sys
 from sys import stdout,stderr,version_info
 
 n_decimals = 2
@@ -17,29 +18,29 @@ def print_descriptors(detailed, d, pre_string, post_string):
 
 def print_csv(detailed, d, elements, l):
     if detailed:
-        print ",Completeness,,cDNA coverage,,,,,5' extent,,,,, 3' extent,,,,,Genes per contig"
-        print ",cDNA, CDS,mean, sd, median, min, max,mean, sd, median, min, max,mean, sd, median, min, max,mean, sd, median, min, max"
+        print(",Completeness,,cDNA coverage,,,,,5' extent,,,,, 3' extent,,,,,Genes per contig")
+        print(",cDNA, CDS,mean, sd, median, min, max,mean, sd, median, min, max,mean, sd, median, min, max,mean, sd, median, min, max")
     else:
-        print ",Completeness,,cDNA coverage,,5' extent,, 3' extent,,Genes per contig"
-        print ",cDNA, CDS, mean, sd, mean, sd, mean, sd, mean, sd"
+        print(",Completeness,,cDNA coverage,,5' extent,, 3' extent,,Genes per contig")
+        print(",cDNA, CDS, mean, sd, mean, sd, mean, sd, mean, sd")
 
     for k in l:
         stdout.write('{},{},{},'.format(k,d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
         for e in elements:
             print_descriptors(detailed, d[k][e], '', ',')
             
-        print                       # Get a line break between datasets
+        print("\n")                       # Get a line break between datasets
     
 
 def print_text(detailed, d, elements, name_list):
-    longest_name = max(map(len, d.keys()))
+    longest_name = max(list(map(len, list(d.keys()))))
     prefix = ' ' * (longest_name + 1)
     if detailed: 
-        print prefix + "|Completeness|       cDNA coverage       |         5' extent        |         3' extent        |     Genes per contig"
-        print prefix + "| cDNA   CDS |  mean   sd med.  min  max | mean   sd med.  min  max | mean   sd med.  min  max | mean   sd med.  min  max"
+        print(prefix + "|Completeness|       cDNA coverage       |         5' extent        |         3' extent        |     Genes per contig")
+        print(prefix + "| cDNA   CDS |  mean   sd med.  min  max | mean   sd med.  min  max | mean   sd med.  min  max | mean   sd med.  min  max")
     else:
-        print prefix + "|Completeness|  cDNA coverage |     5' extent  |    3' extent   |   Genes/contig"
-        print prefix + "| cDNA   CDS |    mean     sd |    mean     sd |   mean     sd  |    mean    sd"
+        print(prefix + "|Completeness|  cDNA coverage |     5' extent  |    3' extent   |   Genes/contig")
+        print(prefix + "| cDNA   CDS |    mean     sd |    mean     sd |   mean     sd  |    mean    sd")
 
     for k in name_list:
         stdout.write('{:<{}} |{:>5} {:>5} '.format(k, longest_name, d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
@@ -47,20 +48,20 @@ def print_text(detailed, d, elements, name_list):
             stdout.write('|')
             print_descriptors(detailed, d[k][e], ' ', '')
             
-        print                       # Get a line break between datasets
+        print("\n")                       # Get a line break between datasets
     
 
 
 
 def print_html(detailed, d, elements, name_list):
     if detailed:
-        print '<html><head><style type="text/css">table {border: solid black 1px; border-collapse: collapse;} th, td {border: solid black 1px;} td {text-align: right;}</style></head><body>'
-        print '<table><tr><th></th><th colspan=2>Completeness</th><th colspan=5>cDNA coverage</th><th colspan=5>5\' extent</th><th colspan=5>3\' extent</th><th colspan=5>Genes per contig</th></tr>'
-        print "<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th></tr>"
+        print('<html><head><style type="text/css">table {border: solid black 1px; border-collapse: collapse;} th, td {border: solid black 1px;} td {text-align: right;}</style></head><body>')
+        print('<table><tr><th></th><th colspan=2>Completeness</th><th colspan=5>cDNA coverage</th><th colspan=5>5\' extent</th><th colspan=5>3\' extent</th><th colspan=5>Genes per contig</th></tr>')
+        print("<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th><th>mean</th><th>sd</th><th>median</th><th>min</th><th>max</th></tr>")
     else:
-        print '<html><head><style type="text/css">table {border: solid black 1px; border-collapse: collapse;} th, td {border: solid black 1px;} td {text-align: right;}</style></head><body>'
-        print '<table><tr><th></th><th colspan=2>Completeness</th><th colspan=2>cDNA coverage</th><th colspan=2>5\' extent</th><th colspan=2>3\' extent</th><th colspan=2>Genes per contig</th></tr>'
-        print "<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th></tr>"
+        print('<html><head><style type="text/css">table {border: solid black 1px; border-collapse: collapse;} th, td {border: solid black 1px;} td {text-align: right;}</style></head><body>')
+        print('<table><tr><th></th><th colspan=2>Completeness</th><th colspan=2>cDNA coverage</th><th colspan=2>5\' extent</th><th colspan=2>3\' extent</th><th colspan=2>Genes per contig</th></tr>')
+        print("<tr><th/><th>cDNA</th><th>CDS</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th><th>mean</th><th>sd</th></tr>")
 
 
     for k in name_list:
@@ -68,8 +69,8 @@ def print_html(detailed, d, elements, name_list):
         for e in elements:
             print_descriptors(detailed, d[k][e], '<td>', '</td>')
 
-        print '</tr>'
-    print "</table></body></html>"
+        print('</tr>')
+    print("</table></body></html>")
 
 
 def safe_latex_string(s):
@@ -79,29 +80,29 @@ def print_latex(detailed, d, elements, name_list):
     n_cols = len(elements)*5 + 2
     alignment = 'r' * 5
     header = '|rr' + ('|' + alignment) * len(elements)
-    print '\\documentclass{article}\\usepackage[a4paper,landscape,margin=2cm]{geometry}\\begin{document}{\\footnotesize\\begin{tabular}{l' + header + '} '
+    print('\\documentclass{article}\\usepackage[a4paper,landscape,margin=2cm]{geometry}\\begin{document}{\\footnotesize\\begin{tabular}{l' + header + '} ')
 
     if detailed:
-        print '&\\multicolumn{2}{|c|}{Completeness}&\\multicolumn{5}{|c|}{cDNA coverage}&\\multicolumn{5}{|c|}{5\' extent}&\\multicolumn{5}{|c|}{3\' extent}&\\multicolumn{5}{|c|}{Genes per contig}\\\\'
-        print "&cDNA&CDS&mean&sd&median&min&max&mean&sd&median&min&max&mean&sd&median&min&max&mean&sd&median&min&max\\\\\\hline"
+        print('&\\multicolumn{2}{|c|}{Completeness}&\\multicolumn{5}{|c|}{cDNA coverage}&\\multicolumn{5}{|c|}{5\' extent}&\\multicolumn{5}{|c|}{3\' extent}&\\multicolumn{5}{|c|}{Genes per contig}\\\\')
+        print("&cDNA&CDS&mean&sd&median&min&max&mean&sd&median&min&max&mean&sd&median&min&max&mean&sd&median&min&max\\\\\\hline")
     else:
-        print '&\\multicolumn{2}{|c|}{Completeness}&\\multicolumn{2}{|c|}{cDNA coverage}&\\multicolumn{2}{|c|}{5\' extent}&\\multicolumn{2}{|c|}{3\' extent}&\\multicolumn{2}{|c|}{Genes per contig}\\\\'
-        print "&cDNA&CDS&mean&sd&mean&sd&mean&sd&mean&sd\\\\\\hline"
+        print('&\\multicolumn{2}{|c|}{Completeness}&\\multicolumn{2}{|c|}{cDNA coverage}&\\multicolumn{2}{|c|}{5\' extent}&\\multicolumn{2}{|c|}{3\' extent}&\\multicolumn{2}{|c|}{Genes per contig}\\\\')
+        print("&cDNA&CDS&mean&sd&mean&sd&mean&sd&mean&sd\\\\\\hline")
 
     for k in name_list:
         stdout.write('{}&{}&{}'.format(safe_latex_string(k),d[k]['completeness']['cDNA'],d[k]['completeness']['CDS']))
         for e in elements:
             print_descriptors(detailed, d[k][e], '&', '')
 
-        print '\\\\'
-    print '\\end{tabular}}\\end{document}'
+        print('\\\\')
+    print('\\end{tabular}}\\end{document}')
 
 
 ###########################################################################################
 
 if __name__ == "__main__":
     # Requires python 2.7 or later (due to the dictionary comprehensions?)
-    if version_info[0] < 2 or (version_info[0] >= 2 and version_info[1] < 7):
+    if (sys.version_info[0] == 1) or (sys.version_info[0] == 2 and sys.version_info[1] < 7):
         print("This script requires Python version 2.7 or later")
         exit(1)
 
@@ -121,7 +122,7 @@ if __name__ == "__main__":
             j_file = open(f)
             rawdata = json.load(j_file)
             n_correct_files += 1
-        except Exception, e:
+        except Exception as e:
             stderr.write("Warning: Could not read JSON data from file '" + f + "'. Ignoring and continuing.\n")
             continue
 
@@ -142,7 +143,7 @@ if __name__ == "__main__":
             continue
 
         data[dataset_name] = {}
-        for k in rawdata.keys():
+        for k in list(rawdata.keys()):
             data[dataset_name][k] = rawdata[k]
 
     if n_correct_files < 1:
@@ -163,7 +164,7 @@ if __name__ == "__main__":
     elif args.format == 'latex' or args.format == 'tex':
         print_latex(args.long, data, elements, name_list)
     elif args.format == 'md' or args.format == 'markdown':
-        print "Markdown output not implemented yet."
+        print("Markdown output not implemented yet.")
     else:
         stderr.write("Error: format '" + args.format + "' is not implemented by petimeter_table\n")
         exit(1)
