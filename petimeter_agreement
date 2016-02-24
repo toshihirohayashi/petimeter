@@ -34,7 +34,7 @@ def gene_correlation(d, name1, name2):
     t2 = d[name2]['cDNA_coverage']
 
     # Get the union of transcript accessions
-    keys = list(t1.keys() | t2.keys())
+    keys = list(t1.keys()) + list(t2.keys())
     return numpy.corrcoef(
         [t1.get(x, 0) for x in keys],
         [t2.get(x, 0) for x in keys])[0, 1]
